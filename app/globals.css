@@ -72,3 +72,43 @@ body::before {
 .kk-pulse {
   animation: kk-pulse 1.2s ease-in-out infinite;
 }
+
+/* Turn cut-in: a band sweeps across, the name punches in. */
+@keyframes kk-cutin {
+  0% {
+    transform: translateX(-110%);
+  }
+  18%,
+  82% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(110%);
+  }
+}
+@keyframes kk-cutin-text {
+  0% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(0.95);
+    opacity: 1;
+  }
+  32%,
+  100% {
+    transform: scale(1);
+  }
+}
+.kk-cutin {
+  animation: kk-cutin 1.6s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  background: var(--color-tri-blue);
+  box-shadow:
+    0 -6px 0 var(--color-tri-white),
+    0 -12px 0 var(--color-tri-red),
+    0 6px 0 var(--color-tri-white),
+    0 12px 0 var(--color-tri-red);
+}
+.kk-cutin-text {
+  animation: kk-cutin-text 1.6s ease-out both;
+}

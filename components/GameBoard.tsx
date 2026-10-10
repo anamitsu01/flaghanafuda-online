@@ -196,6 +196,17 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
 
       <LogPanel room={room} />
 
+      {/* Keyed by turn so the band plays once each time my turn comes round. */}
+      {myTurn && (
+        <div className="pointer-events-none fixed inset-x-0 top-1/3 z-40 overflow-hidden py-4" role="status" aria-live="polite">
+          <div key={`${room.round}-${room.turnIndex}`} className="kk-cutin relative left-[-10%] w-[120%] py-4">
+            <p className="kk-cutin-text px-6 text-center text-3xl font-black tracking-wider text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)] sm:text-5xl">
+              {me!.name}の番
+            </p>
+          </div>
+        </div>
+      )}
+
       {asking !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" role="dialog" aria-modal="true" onClick={() => setConfirming(null)}>
           <div className="w-full max-w-xs rounded-xl border border-white/10 bg-panel p-5 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
