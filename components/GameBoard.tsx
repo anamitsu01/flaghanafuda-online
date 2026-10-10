@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { COLORS, COLOR_HEX, COLOR_JA, FLAGS, REGIONS, REGION_JA, SYMBOLS, SYMBOL_ICON, SYMBOL_JA } from "@/lib/flags";
 import {
   baseScore,
@@ -20,6 +20,7 @@ import {
   rolePoints,
   scoreOf,
 } from "@/lib/rules";
+import { TRIVIA } from "@/lib/trivia";
 import type { ClientToServerEvents } from "@/lib/socketEvents";
 import type { BonusKind, Player, PublicEvent, RoleKey, RoomState } from "@/lib/types";
 import { BONUS_POINTS, HIDDEN_FLAG, HOLD_LIMIT, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
@@ -37,6 +38,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
   const [heldSelection, setHeldSelection] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [triviaOff, setTriviaOff] = useState(false);
 
   const me = room.players.find((p) => p.id === viewerId);
   const turn = room.turn;
@@ -64,6 +66,8 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
     else run(act("game:placeHeld", { flag: activeFlag, role }));
   }
 
+  // Someone else is playing: time for trivia.
+  const waiting = room.phase === "playing" && !myTurn && !triviaOff;
   const takesLeft = turn ? TAKES_PER_TURN - turn.taken : 0;
   const nothingToTake = cardsAvailable(room) === 0;
   const hint = !turn
@@ -86,7 +90,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
   const leading = Math.max(...room.players.map((p) => scoreOf(room, p)));
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex flex-col gap-4 ${waiting ? "pb-28" : ""}`}>
       {room.phase === "gameover" && <Result room={room} viewerId={viewerId} act={act} onError={setError} />}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-panel/80 px-4 py-3">
@@ -196,6 +200,8 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
 
       <LogPanel room={room} />
 
+      {waiting && <TriviaBar market={room.market} onHide={() => setTriviaOff(true)} />}
+
       {/* Keyed by turn so the band plays once each time my turn comes round. */}
       {myTurn && (
         <div className="pointer-events-none fixed inset-x-0 top-1/3 z-40 overflow-hidden py-4" role="status" aria-live="polite">
@@ -270,6 +276,41 @@ function ColorDots({ flagId }: { flagId: number }) {
 }
 
 /** Without `reveal` only the picture and its colors show: the name, region and length stay unknown. */
+const TRIVIA_MS = 12_000;
+
+/** Something to read while others play: one fact at a time about a country that isn't on offer right now. */
+function TriviaBar({ market, onHide }: { market: (number | null)[]; onHide: () => void }) {
+  // Shuffled once; the open flags are skipped so the bar never gives away their names.
+  const [order] = useState(() =>
+    FLAGS.flatMap((f) => (TRIVIA[f.code] ?? []).map((text) => ({ flagId: f.id, text, sort: Math.random() }))).sort((a, b) => a.sort - b.sort)
+  );
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setStep((n) => n + 1), TRIVIA_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (order.length === 0) return null;
+  let item = order[step % order.length];
+  for (let i = 1; market.includes(item.flagId) && i < order.length; i++) item = order[(step + i) % order.length];
+  const flag = FLAGS[item.flagId];
+  return (
+    <aside className="fixed inset-x-0 bottom-0 z-30 border-t border-white/15 bg-panel/95 px-4 py-2.5 backdrop-blur">
+      <div key={step} className="kk-pop mx-auto flex max-w-4xl items-center gap-3">
+        <FlagImg flagId={flag.id} className="w-14 shrink-0" />
+        <p className="min-w-0 flex-1 text-sm leading-snug text-white/80">
+          <span className="mr-2 text-xs text-tri-blue-light">世界の豆知識</span>
+          <b className="mr-2 text-ink">{flag.name}</b>
+          {item.text}
+        </p>
+        <button onClick={onHide} className="shrink-0 rounded-full border border-white/15 px-2 py-0.5 text-xs text-white/50 hover:bg-white/10">
+          かくす
+        </button>
+      </div>
+    </aside>
+  );
+}
+
 function FlagCard({ flagId, reveal = false, selected, onClick }: { flagId: number; reveal?: boolean; selected?: boolean; onClick?: () => void }) {
   const cls = `kk-pop flex flex-col items-center gap-1 rounded-lg border-2 bg-white/5 p-1.5 text-center ${
     selected ? "border-tri-red bg-tri-red/15" : "border-white/10 enabled:hover:border-white/40"

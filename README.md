@@ -45,6 +45,7 @@ npx tsx scripts/simulate.ts 300
 - `lib/flagList.ts`: 収録する国・地域と、ゲームで使う国名の正本(地域別)。
 - `lib/flagColors.ts`: 各国旗の色(自動生成)。
 - `lib/flagSymbols.ts`: 星・月のある国旗(手書き)。
+- `lib/trivia.ts`: ほかの人の手番中に画面下に流す豆知識(全218の国・地域に1つずつ、手書き)。
 - `docs/国名一覧.md`: 国名・文字数・色の一覧表(自動生成)。
 
 国旗の画像は [flag-icons](https://github.com/lipis/flag-icons)(MIT)。国旗を追加・変更したら:
