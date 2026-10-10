@@ -96,9 +96,9 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
         {room.phase === "playing" && leading >= room.settings.targetScore && (
           <span className="rounded-full bg-red-500/20 px-3 py-0.5 text-sm font-bold text-red-300">最終ラウンド!</span>
         )}
-        {hint && <span className={`text-sm font-semibold ${myTurn ? "text-lamp-light" : "text-white/70"}`}>{hint}</span>}
+        {hint && <span className={`text-sm font-semibold ${myTurn ? "text-tri-red-light" : "text-white/70"}`}>{hint}</span>}
         {myTurn && nothingToTake && pending === null && picked === null && (
-          <button onClick={() => run(act("game:pass", {}))} className="rounded-full bg-lamp px-4 py-1 text-sm font-bold text-black hover:bg-lamp-light">
+          <button onClick={() => run(act("game:pass", {}))} className="rounded-full bg-tri-blue px-4 py-1 text-sm font-bold text-white hover:bg-tri-blue-bright">
             手番を終える
           </button>
         )}
@@ -141,10 +141,10 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
           <button
             disabled={!myTurn || !canTake(turn!) || deckAvailable(room) === 0}
             onClick={() => run(act("game:draw", {}))}
-            className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-lamp-deep bg-gradient-to-br from-lamp-deep/60 to-black/40 p-2 enabled:hover:border-lamp disabled:opacity-60"
+            className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-tri-blue bg-gradient-to-br from-tri-blue-deep/60 to-black/40 p-2 enabled:hover:border-tri-white disabled:opacity-60"
           >
             <span className="text-2xl">🂠</span>
-            <span className="text-xs font-bold text-lamp-light">山札</span>
+            <span className="text-xs font-bold text-tri-white">山札</span>
             <span className="text-xs text-white/50">残り{room.deckCount}枚</span>
             <span className="text-[10px] text-white/35">捨て札{room.discard.length}枚</span>
           </button>
@@ -154,7 +154,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
               {myTurn && me && canHold(me) && (
                 <button
                   onClick={() => run(act("game:resolveDraw", { to: "hold" }))}
-                  className="rounded-full bg-lamp px-2 py-1 text-xs font-bold text-black hover:bg-lamp-light"
+                  className="rounded-full bg-tri-blue px-2 py-1 text-xs font-bold text-white hover:bg-tri-blue-bright"
                 >
                   保留する
                 </button>
@@ -209,7 +209,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
               <button onClick={() => setConfirming(null)} className="flex-1 rounded-full border border-white/15 px-4 py-2 font-semibold hover:bg-white/10">
                 いいえ
               </button>
-              <button onClick={() => run(act("game:pick", { flag: asking }))} className="flex-1 rounded-full bg-lamp px-4 py-2 font-bold text-black hover:bg-lamp-light">
+              <button onClick={() => run(act("game:pick", { flag: asking }))} className="flex-1 rounded-full bg-tri-blue px-4 py-2 font-bold text-white hover:bg-tri-blue-bright">
                 はい
               </button>
             </div>
@@ -226,7 +226,7 @@ function FlagImg({ flagId, className = "", secret = false }: { flagId: number; c
     return (
       <span
         title="ほかの人には見えない国旗"
-        className={`flex aspect-[4/3] items-center justify-center rounded-sm border border-lamp-deep bg-gradient-to-br from-lamp-deep/70 to-black/40 text-lamp-light/70 ${className}`}
+        className={`flex aspect-[4/3] items-center justify-center rounded-sm border border-tri-blue bg-gradient-to-br from-tri-blue-deep/70 to-black/40 text-tri-white/70 ${className}`}
       >
         ?
       </span>
@@ -250,7 +250,7 @@ function ColorDots({ flagId }: { flagId: number }) {
         <span key={c} title={COLOR_JA[c]} className="h-2.5 w-2.5 rounded-full border border-white/40" style={{ background: COLOR_HEX[c] }} />
       ))}
       {FLAGS[flagId].symbols.map((s) => (
-        <span key={s} title={SYMBOL_JA[s]} className="text-[11px] leading-[10px] text-lamp-light">
+        <span key={s} title={SYMBOL_JA[s]} className="text-[11px] leading-[10px] text-tri-white">
           {SYMBOL_ICON[s]}
         </span>
       ))}
@@ -261,7 +261,7 @@ function ColorDots({ flagId }: { flagId: number }) {
 /** Without `reveal` only the picture and its colors show: the name, region and length stay unknown. */
 function FlagCard({ flagId, reveal = false, selected, onClick }: { flagId: number; reveal?: boolean; selected?: boolean; onClick?: () => void }) {
   const cls = `kk-pop flex flex-col items-center gap-1 rounded-lg border-2 bg-white/5 p-1.5 text-center ${
-    selected ? "border-lamp bg-lamp/15" : "border-white/10 enabled:hover:border-white/40"
+    selected ? "border-tri-red bg-tri-red/15" : "border-white/10 enabled:hover:border-white/40"
   }`;
   if (flagId === HIDDEN_FLAG) {
     return (
@@ -315,7 +315,7 @@ function PlayerBoard({
   const won = room.winners?.includes(player.id);
 
   return (
-    <section className={`rounded-xl border bg-panel/80 p-3 ${isTurn ? "border-lamp/70" : "border-white/10"} ${compact ? "" : "sm:p-4"}`}>
+    <section className={`rounded-xl border bg-panel/80 p-3 ${isTurn ? "border-tri-red/80" : "border-white/10"} ${compact ? "" : "sm:p-4"}`}>
       <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className={`font-bold ${player.connected ? "text-ink" : "text-white/40"}`}>
           {won && "👑 "}
@@ -323,8 +323,8 @@ function PlayerBoard({
           {player.isBot && " 🤖"}
           {isMe && <span className="ml-1 text-xs font-normal text-white/40">(あなた)</span>}
         </span>
-        {isTurn && <span className="rounded-full bg-lamp px-2 py-0.5 text-xs font-bold text-black">手番</span>}
-        <span className="text-2xl font-black text-lamp">
+        {isTurn && <span className="rounded-full bg-tri-red px-2 py-0.5 text-xs font-bold text-white">手番</span>}
+        <span className="text-2xl font-black text-tri-white">
           {scoreOf(room, player)}
           <span className="text-sm font-bold">点</span>
         </span>
@@ -333,7 +333,7 @@ function PlayerBoard({
           {bonuses.length > 0 && ` + ボーナス${bonuses.length * BONUS_POINTS}`}
         </span>
         {bonuses.map((k) => (
-          <span key={k} className="rounded-full border border-lamp/50 bg-lamp/10 px-2 py-0.5 text-xs text-lamp-light">
+          <span key={k} className="rounded-full border border-tri-blue-light/50 bg-tri-blue/20 px-2 py-0.5 text-xs text-tri-blue-light">
             {BONUS_ICON[k]} {BONUS_LABEL[k]} +{BONUS_POINTS}
           </span>
         ))}
@@ -355,7 +355,7 @@ function PlayerBoard({
         ))}
         {SYMBOLS.map((s) => (
           <RoleCell key={s} player={player} role={`s:${s}`} target={targets.includes(`s:${s}`)} onRole={onRole}>
-            <span className="text-lamp-light">{SYMBOL_ICON[s]}</span>
+            <span className="text-tri-white">{SYMBOL_ICON[s]}</span>
             {SYMBOL_JA[s]}
           </RoleCell>
         ))}
@@ -366,7 +366,7 @@ function PlayerBoard({
           disabled={!nameTarget}
           onClick={() => onRole?.("name")}
           className={`flex flex-col gap-1 rounded-lg border p-1.5 text-left ${
-            nameTarget ? "kk-pulse cursor-pointer border-lamp bg-lamp/10" : len >= NAME_GOAL ? "border-emerald-400/40 bg-emerald-400/5" : "border-white/10 bg-white/[0.03]"
+            nameTarget ? "kk-pulse cursor-pointer border-tri-red bg-tri-red/10" : len >= NAME_GOAL ? "border-emerald-400/40 bg-emerald-400/5" : "border-white/10 bg-white/[0.03]"
           }`}
         >
           <span className="flex items-center gap-2 text-xs">
@@ -402,7 +402,7 @@ function PlayerBoard({
                   disabled={!onHold}
                   onClick={() => onHold?.(flagId)}
                   className={`kk-pop rounded border-2 p-0.5 text-center ${size} ${
-                    selectedFlag === flagId ? "border-lamp bg-lamp/15" : "border-transparent enabled:hover:border-white/40"
+                    selectedFlag === flagId ? "border-tri-red bg-tri-red/15" : "border-transparent enabled:hover:border-white/40"
                   }`}
                 >
                   <FlagImg flagId={flagId} className="w-full" />
@@ -440,7 +440,7 @@ function RoleCell({
       disabled={!target}
       onClick={() => onRole?.(role)}
       className={`flex flex-col gap-1 rounded-lg border p-1.5 text-left ${
-        target ? "kk-pulse cursor-pointer border-lamp bg-lamp/10" : done ? "border-emerald-400/40 bg-emerald-400/5" : "border-white/10 bg-white/[0.03]"
+        target ? "kk-pulse cursor-pointer border-tri-red bg-tri-red/10" : done ? "border-emerald-400/40 bg-emerald-400/5" : "border-white/10 bg-white/[0.03]"
       }`}
     >
       <span className="flex items-center justify-between gap-1 text-xs">
@@ -466,8 +466,8 @@ function Result({ room, viewerId, act, onError }: { room: RoomState; viewerId: s
   const winners = room.players.filter((p) => room.winners?.includes(p.id));
   const isHost = room.players.find((p) => p.id === viewerId)?.isHost;
   return (
-    <section className="rounded-xl border-2 border-lamp bg-lamp/10 p-4 text-center">
-      <p className="text-sm text-lamp-light">{room.endReason === "deck" ? "国旗がなくなりました" : "ゲーム終了"}</p>
+    <section className="rounded-xl border-2 border-tri-red bg-tri-red/10 p-4 text-center">
+      <p className="text-sm text-tri-blue-light">{room.endReason === "deck" ? "国旗がなくなりました" : "ゲーム終了"}</p>
       <h2 className="mb-3 text-2xl font-black text-ink">
         👑 {winners.map((p) => p.name).join(" と ")} の勝ち{winners.length > 1 && "(同着1位)"}
       </h2>
@@ -475,7 +475,7 @@ function Result({ room, viewerId, act, onError }: { room: RoomState; viewerId: s
         {ranked.map((p) => (
           <li key={p.id} className="flex justify-between gap-3">
             <span className="truncate">{p.name}</span>
-            <b className="text-lamp">{scoreOf(room, p)}点</b>
+            <b className="text-tri-white">{scoreOf(room, p)}点</b>
           </li>
         ))}
       </ul>
@@ -483,7 +483,7 @@ function Result({ room, viewerId, act, onError }: { room: RoomState; viewerId: s
         <div className="flex justify-center gap-3">
           <button
             onClick={async () => onError(await act("game:playAgain", {}))}
-            className="rounded-full bg-lamp px-6 py-2 font-bold text-black hover:bg-lamp-light"
+            className="rounded-full bg-tri-blue px-6 py-2 font-bold text-white hover:bg-tri-blue-bright"
           >
             もう一度遊ぶ
           </button>
@@ -534,7 +534,7 @@ function LogPanel({ room }: { room: RoomState }) {
             <span key={k}>
               {BONUS_ICON[k]} {BONUS_LABEL[k]}:{" "}
               {holder ? (
-                <b className="text-lamp-light">
+                <b className="text-tri-blue-light">
                   {holder.name}({bonusValue(holder, k)}
                   {k === "name" ? "文字" : "役"})
                 </b>
@@ -547,7 +547,7 @@ function LogPanel({ room }: { room: RoomState }) {
       </div>
       <ul className="max-h-48 space-y-0.5 overflow-y-auto text-white/60">
         {[...room.log].reverse().map((e, i) => (
-          <li key={room.log.length - i} className={e.type === "complete" || e.type === "bonus" || e.type === "win" ? "text-lamp-light" : ""}>
+          <li key={room.log.length - i} className={e.type === "complete" || e.type === "bonus" || e.type === "win" ? "text-tri-blue-light" : ""}>
             {text(e)}
           </li>
         ))}

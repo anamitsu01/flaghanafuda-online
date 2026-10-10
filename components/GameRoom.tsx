@@ -137,8 +137,10 @@ export default function GameRoom({ code }: { code: string }) {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between">
-        <span className="text-lg font-black tracking-widest text-ink/80">
-          国旗<span className="text-lamp">花札</span>
+        <span className="text-lg font-black tracking-widest">
+          <span className="text-tri-blue-bright">国</span>
+          <span className="text-tri-white">旗花</span>
+          <span className="text-tri-red">札</span>
         </span>
         <div className="flex gap-2">
           <button
@@ -234,7 +236,7 @@ function JoinForm({
         <button
           onClick={() => name.trim() && onJoin(name.trim())}
           disabled={!name.trim()}
-          className="w-full rounded-full bg-lamp hover:bg-lamp-light disabled:opacity-40 px-8 py-3 font-bold text-black"
+          className="w-full rounded-full bg-tri-blue hover:bg-tri-blue-bright disabled:opacity-40 px-8 py-3 font-bold text-white"
         >
           参加する
         </button>

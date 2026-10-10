@@ -8,10 +8,14 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Explorer's lantern: amber accent for buttons, highlights and headings */
-  --color-lamp: #f0b43c;
-  --color-lamp-light: #f7c964;
-  --color-lamp-deep: #5a4113;
+  /* Tricolor: blue for buttons, red for whatever is active or selected, white for text and frames */
+  --color-tri-blue: #2f6fe4;
+  --color-tri-blue-light: #8fb4ff;
+  --color-tri-blue-bright: #4b86f5;
+  --color-tri-blue-deep: #17306b;
+  --color-tri-red: #ed2939;
+  --color-tri-red-light: #ff8a94;
+  --color-tri-white: #f5f7fa;
   --color-panel: #121a23;
   --color-ink: #eef2f6;
   --font-sans: var(--font-geist-sans);
@@ -20,10 +24,21 @@
 
 body {
   background:
-    radial-gradient(ellipse at top, rgba(240, 180, 60, 0.1), transparent 60%),
+    radial-gradient(ellipse at top left, rgba(47, 111, 228, 0.16), transparent 55%),
+    radial-gradient(ellipse at top right, rgba(237, 41, 57, 0.12), transparent 55%),
     var(--background);
   background-attachment: fixed;
   color: var(--foreground);
+}
+
+/* A thin tricolor band across the top of every page. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 4px;
+  z-index: 40;
+  background: linear-gradient(90deg, var(--color-tri-blue) 0 33.3%, var(--color-tri-white) 33.3% 66.6%, var(--color-tri-red) 66.6%);
 }
 
 /* A flag that has just landed somewhere pops in. */
@@ -48,10 +63,10 @@ body {
 @keyframes kk-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(240, 180, 60, 0.8);
+    box-shadow: 0 0 0 0 rgba(237, 41, 57, 0.85);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(240, 180, 60, 0);
+    box-shadow: 0 0 0 5px rgba(237, 41, 57, 0);
   }
 }
 .kk-pulse {

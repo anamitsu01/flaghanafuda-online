@@ -47,9 +47,11 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-20">
       <div className="w-full max-w-md text-center">
-        <p className="mb-3 text-xs tracking-[0.5em] text-lamp/80">FLAG COLLECTING GAME</p>
-        <h1 className="mb-4 text-5xl font-black tracking-widest text-ink">
-          国旗<span className="text-lamp">花札</span>
+        <p className="mb-3 text-xs tracking-[0.5em] text-white/60">FLAG COLLECTING GAME</p>
+        <h1 className="mb-4 text-5xl font-black tracking-widest">
+          <span className="text-tri-blue-bright">国</span>
+          <span className="text-tri-white">旗花</span>
+          <span className="text-tri-red">札</span>
         </h1>
         <p className="mb-10 text-sm leading-relaxed text-white/55">
           世界の国旗を2枚ずつ集めて、色・地域・国名の役をそろえよう。
@@ -70,7 +72,7 @@ export default function Home() {
         <button
           onClick={() => createRoom()}
           disabled={mode === "create"}
-          className="mb-4 w-full rounded-full bg-lamp px-8 py-3 font-bold text-black hover:bg-lamp-light disabled:opacity-40"
+          className="mb-4 w-full rounded-full bg-tri-blue px-8 py-3 font-bold text-white hover:bg-tri-blue-bright disabled:opacity-40"
         >
           {mode === "create" ? "作成中..." : "部屋を作る"}
         </button>

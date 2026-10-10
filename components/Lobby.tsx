@@ -50,7 +50,11 @@ export default function Lobby({
     <div className="mx-auto w-full max-w-xl text-center">
       <p className="mb-1 text-white/60">部屋コード</p>
       <div className="mb-4 flex items-center justify-center gap-3">
-        <span className="text-5xl font-black tracking-[0.3em] text-lamp">{room.code}</span>
+        <span className="pl-[0.3em] text-5xl font-black tracking-[0.3em]">
+          <span className="text-tri-blue-bright">{room.code.slice(0, 2)}</span>
+          <span className="text-tri-white">{room.code.slice(2, 3)}</span>
+          <span className="text-tri-red">{room.code.slice(3)}</span>
+        </span>
       </div>
       <div className="mb-6 flex items-center justify-center gap-2">
         <input
@@ -64,7 +68,7 @@ export default function Lobby({
       </div>
 
       {room.isTest && (
-        <p className="mb-4 rounded-lg border border-lamp/40 bg-lamp/10 px-4 py-2 text-sm text-lamp-light">
+        <p className="mb-4 rounded-lg border border-tri-blue-light/40 bg-tri-blue/15 px-4 py-2 text-sm text-tri-blue-light">
           🤖 テスト部屋: ボットが自動で相手をします。{isHost && "ボットの追加・削除ができます。"}
         </p>
       )}
@@ -127,7 +131,7 @@ export default function Lobby({
         <button
           onClick={handleStart}
           disabled={starting || !!startBlocker}
-          className="rounded-full bg-lamp px-8 py-3 font-bold text-black hover:bg-lamp-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-full bg-tri-blue px-8 py-3 font-bold text-white hover:bg-tri-blue-bright disabled:cursor-not-allowed disabled:opacity-40"
         >
           {starting ? "開始中..." : "ゲームを始める"}
         </button>
