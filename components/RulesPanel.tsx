@@ -1,5 +1,5 @@
 import { FLAGS } from "@/lib/flags";
-import { BONUS_MIN_ROLES, BONUS_POINTS, HOLD_LIMIT, MARKET_SIZE, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
+import { BONUS_MIN_ROLES, BONUS_POINTS, HOLD_LIMIT, MARKET_SIZE, MOON_POINTS, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
 
 export default function RulesPanel({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
@@ -34,7 +34,7 @@ export function RulesContent({ className = "" }: { className?: string }) {
         <b className="text-ink">保留カード</b>: 自分の手番の最初、国旗を取る前にだけ、好きな枚数を役に置ける。
       </p>
       <p>
-        <b className="text-ink">1ターン1枚</b>: 色役・地域役は、同じ役に1ターンで1枚しか置けない(保留カードも合わせて数える)。
+        <b className="text-ink">1ターン1枚</b>: 色役・地域役・模様役は、同じ役に1ターンで1枚しか置けない(保留カードも合わせて数える)。
         日本と韓国を取っても両方を赤役には置けない。国名役だけは何枚でも置ける。
       </p>
       <ul className="space-y-1">
@@ -45,11 +45,15 @@ export function RulesContent({ className = "" }: { className?: string }) {
           <b className="text-ink">地域役</b>(アジア・ヨーロッパ・アフリカ・アメリカ大陸・オセアニア): 同じ地域の国旗を{ROLE_SIZE}枚で完成、1点。
         </li>
         <li>
+          <b className="text-ink">模様役</b>(星・月): 星のある国旗、月のある国旗をそれぞれ{ROLE_SIZE}枚で完成。星役は1点、月役は数が少ないので<b className="text-ink">{MOON_POINTS}点</b>。
+          星は形を問わない(五芒星・とがった星・線だけの星)。月は三日月のほか、満月を表す円(ラオス・パラオ)も含む。太陽は星に数えない。
+        </li>
+        <li>
           <b className="text-ink">国名役</b>: 国名をつなげて合計{NAME_GOAL}文字以上で完成、1点。完成したあとも置き続けられる。どんな国旗でも置ける。「・」と( )の中は文字数に数えない。
         </li>
       </ul>
       <p>
-        完成した色役・地域役には、もう置けない。同じ役をもう一度作ることもできない。
+        完成した色役・地域役・模様役には、もう置けない。同じ役をもう一度作ることもできない。
         完成した役の国旗5枚は<b className="text-ink">捨て札</b>になり、山札がなくなると捨て札を混ぜ直して新しい山札にする(国名役の国旗は残る)。
       </p>
       <p>
@@ -64,7 +68,7 @@ export function RulesContent({ className = "" }: { className?: string }) {
       </p>
       <p>
         <b className="text-ink">色の数え方</b>: 国旗の面積のおよそ2%以上を占める色を数える。オレンジや金色は黄、えんじ色は赤、水色や紺色は青として扱う。
-        カードの色の丸が、その国旗で使える色。
+        カードの色の丸が、その国旗で使える色。★や☾の印があれば、星役・月役にも使える(模様役に最多ボーナスはない)。
       </p>
       <p className="text-white/45">山札・捨て札・公開の国旗がすべてなくなった場合は、そのラウンドの終わりにいちばん点が高い人の勝ち。</p>
     </div>

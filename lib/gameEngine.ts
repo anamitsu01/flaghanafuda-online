@@ -1,4 +1,4 @@
-import { COLORS, FLAGS, REGIONS, type Color, type Region } from "./flags";
+import { COLORS, FLAGS, REGIONS, SYMBOLS, type Color, type Region, type Symbol } from "./flags";
 import {
   bonusValue,
   canHold,
@@ -60,11 +60,12 @@ function makeRoomCode(): string {
 // ---------------------------------------------------------------------------
 // Rooms and lobby
 
-function emptyBoard(): Pick<Player, "done" | "colors" | "regions" | "names" | "hold"> {
+function emptyBoard(): Pick<Player, "done" | "colors" | "regions" | "symbols" | "names" | "hold"> {
   return {
     done: [],
     colors: Object.fromEntries(COLORS.map((c) => [c, []])) as unknown as Record<Color, number[]>,
     regions: Object.fromEntries(REGIONS.map((r) => [r, []])) as unknown as Record<Region, number[]>,
+    symbols: Object.fromEntries(SYMBOLS.map((s) => [s, []])) as unknown as Record<Symbol, number[]>,
     names: [],
     hold: [],
   };
@@ -122,7 +123,7 @@ export function updateSettings(room: RoomState, requesterId: string, settings: P
   if (room.phase !== "lobby" && room.phase !== "gameover") throw new GameError("ゲーム中は設定を変更できません");
   const next: RoomSettings = { ...room.settings };
   const v = settings.targetScore;
-  if (typeof v === "number" && Number.isFinite(v)) next.targetScore = Math.min(18, Math.max(3, Math.round(v)));
+  if (typeof v === "number" && Number.isFinite(v)) next.targetScore = Math.min(22, Math.max(3, Math.round(v)));
   return { ...room, settings: next };
 }
 
@@ -262,7 +263,8 @@ function place(room: RoomState, player: Player, turn: TurnState, flagId: number,
     room.discard.push(...flags.splice(0));
     log(room, { type: "complete", playerId: player.id, role });
   }
-  updateBonus(room, player, role.startsWith("c:") ? "color" : "region");
+  if (role.startsWith("c:")) updateBonus(room, player, "color");
+  if (role.startsWith("r:")) updateBonus(room, player, "region");
 }
 
 function finish(room: RoomState, winners: Player[], reason: EndReason) {

@@ -1,7 +1,7 @@
-import type { Color, Region } from "./flags";
+import type { Color, Region, Symbol } from "./flags";
 
-/** Where a flag can go: one color role, one region role, or the name role. */
-export type RoleKey = `c:${Color}` | `r:${Region}` | "name";
+/** Where a flag can go: one color role, one region role, one symbol role, or the name role. */
+export type RoleKey = `c:${Color}` | `r:${Region}` | `s:${Symbol}` | "name";
 
 export interface Player {
   id: string;
@@ -10,11 +10,12 @@ export interface Player {
   isHost: boolean;
   /** Server-driven test player (only in test rooms). */
   isBot: boolean;
-  /** Completed color/region roles. Their flags have gone to the discard pile. */
+  /** Completed color/region/symbol roles. Their flags have gone to the discard pile. */
   done: RoleKey[];
   /** Flag ids placed in each color role that is still being built. */
   colors: Record<Color, number[]>;
   regions: Record<Region, number[]>;
+  symbols: Record<Symbol, number[]>;
   /** Name role, in the order the flags were added. */
   names: number[];
   /** Deck flags kept without a role yet. Only the owner sees them; others get HIDDEN_FLAG. */
@@ -29,7 +30,7 @@ export interface TurnState {
   picked: number | null;
   /** Flag just drawn from the deck, waiting to be placed or held (HIDDEN_FLAG for other players). */
   pending: number | null;
-  /** Color/region roles that already received a flag this turn. */
+  /** Color/region/symbol roles that already received a flag this turn. */
   used: RoleKey[];
 }
 
@@ -91,7 +92,7 @@ export const MAX_PLAYERS = 6;
 export const MARKET_SIZE = 6;
 export const TAKES_PER_TURN = 2;
 export const HOLD_LIMIT = 3;
-/** Flags needed to complete a color or region role. */
+/** Flags needed to complete a color, region or symbol role. */
 export const ROLE_SIZE = 5;
 /** Total name characters needed to complete the name role. */
 export const NAME_GOAL = 20;
@@ -99,3 +100,5 @@ export const NAME_GOAL = 20;
 export const BONUS_MIN_ROLES = 3;
 export const BONUS_POINTS = 2;
 export const DEFAULT_TARGET = 10;
+/** The moon role is worth more because so few flags have a moon. */
+export const MOON_POINTS = 3;

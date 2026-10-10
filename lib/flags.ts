@@ -1,11 +1,20 @@
 import { FLAG_COLORS } from "./flagColors";
 import { FLAG_LIST, type Region } from "./flagList";
+import { MOON_FLAGS, STAR_FLAGS } from "./flagSymbols";
 
 export type { Region };
 export type Color = "red" | "white" | "blue" | "green" | "yellow" | "black";
 
+/** Shapes that have their own role, like colors do. */
+export type Symbol = "star" | "moon";
+
 export const COLORS: Color[] = ["red", "white", "blue", "green", "yellow", "black"];
 export const REGIONS: Region[] = ["as", "eu", "af", "am", "oc"];
+
+export const SYMBOLS: Symbol[] = ["star", "moon"];
+
+export const SYMBOL_JA: Record<Symbol, string> = { star: "星", moon: "月" };
+export const SYMBOL_ICON: Record<Symbol, string> = { star: "★", moon: "☾" };
 
 export const COLOR_JA: Record<Color, string> = {
   red: "赤",
@@ -43,6 +52,7 @@ export interface Flag {
   len: number;
   region: Region;
   colors: Color[];
+  symbols: Symbol[];
 }
 
 /** 「ドミニカ(共和国)」は4文字: 「・」と( )の中は数えない。 */
@@ -62,4 +72,5 @@ export const FLAGS: Flag[] = REGIONS.flatMap((region) =>
   id,
   len: nameLen(f.name),
   colors: [...(FLAG_COLORS[f.code] ?? "")].map((c) => LETTER[c]),
+  symbols: [...(STAR_FLAGS.includes(f.code) ? ["star" as const] : []), ...(MOON_FLAGS.includes(f.code) ? ["moon" as const] : [])],
 }));

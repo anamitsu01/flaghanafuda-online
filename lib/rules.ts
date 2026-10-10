@@ -1,9 +1,10 @@
 // Pure rule helpers shared by the server engine and the client UI.
-import { COLORS, COLOR_JA, FLAGS, REGIONS, REGION_JA, type Color, type Region } from "./flags";
+import { COLORS, COLOR_JA, FLAGS, REGIONS, REGION_JA, SYMBOLS, SYMBOL_JA, type Color, type Region, type Symbol } from "./flags";
 import {
   BONUS_MIN_ROLES,
   BONUS_POINTS,
   HOLD_LIMIT,
+  MOON_POINTS,
   NAME_GOAL,
   TAKES_PER_TURN,
   type BonusKind,
@@ -16,12 +17,14 @@ import {
 export function roleLabel(role: RoleKey): string {
   if (role === "name") return "国名役";
   const [kind, key] = role.split(":");
+  if (kind === "s") return `${SYMBOL_JA[key as Symbol]}役`;
   return kind === "c" ? `${COLOR_JA[key as Color]}役` : `${REGION_JA[key as Region]}役`;
 }
 
 export function roleFlags(player: Player, role: RoleKey): number[] {
   if (role === "name") return player.names;
   const [kind, key] = role.split(":");
+  if (kind === "s") return player.symbols[key as Symbol];
   return kind === "c" ? player.colors[key as Color] : player.regions[key as Region];
 }
 
@@ -35,6 +38,16 @@ export function colorRolesDone(player: Player): number {
 
 export function regionRolesDone(player: Player): number {
   return REGIONS.filter((r) => roleDone(player, `r:${r}`)).length;
+}
+
+/** Points a completed role is worth. */
+export function rolePoints(role: RoleKey): number {
+  return role === "s:moon" ? MOON_POINTS : 1;
+}
+
+/** Points from symbol roles; they have no "most roles" bonus. */
+export function symbolScore(player: Player): number {
+  return SYMBOLS.filter((s) => roleDone(player, `s:${s}`)).reduce((n, s) => n + rolePoints(`s:${s}`), 0);
 }
 
 export function nameLength(player: Player): number {
@@ -52,7 +65,7 @@ export function bonusValue(player: Player, kind: BonusKind): number {
 }
 
 export function baseScore(player: Player): number {
-  return colorRolesDone(player) + regionRolesDone(player) + (nameLength(player) >= NAME_GOAL ? 1 : 0);
+  return colorRolesDone(player) + regionRolesDone(player) + symbolScore(player) + (nameLength(player) >= NAME_GOAL ? 1 : 0);
 }
 
 export function bonusesHeld(room: RoomState, playerId: string): BonusKind[] {
@@ -69,6 +82,7 @@ export function placeError(player: Player, turn: TurnState, flagId: number, role
   if (role === "name") return null;
   const [kind, key] = role.split(":");
   if (kind === "c" && !flag.colors.includes(key as Color)) return `${flag.name}に${COLOR_JA[key as Color]}はありません`;
+  if (kind === "s" && !flag.symbols.includes(key as Symbol)) return `${flag.name}に${SYMBOL_JA[key as Symbol]}はありません`;
   if (kind === "r" && flag.region !== key) return `${flag.name}は${REGION_JA[key as Region]}ではありません`;
   if (roleDone(player, role)) return `${roleLabel(role)}はもう完成しています`;
   if (turn.used.includes(role)) return `${roleLabel(role)}には、このターンもう1枚置いています`;
@@ -78,7 +92,12 @@ export function placeError(player: Player, turn: TurnState, flagId: number, role
 /** Every role `flagId` may be placed in right now (the name role always qualifies). */
 export function legalRoles(player: Player, turn: TurnState, flagId: number): RoleKey[] {
   const flag = FLAGS[flagId];
-  const roles: RoleKey[] = [...flag.colors.map((c) => `c:${c}` as RoleKey), `r:${flag.region}`, "name"];
+  const roles: RoleKey[] = [
+    ...flag.colors.map((c) => `c:${c}` as RoleKey),
+    `r:${flag.region}`,
+    ...flag.symbols.map((s) => `s:${s}` as RoleKey),
+    "name",
+  ];
   return roles.filter((role) => !placeError(player, turn, flagId, role));
 }
 

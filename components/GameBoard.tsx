@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useState } from "react";
-import { COLORS, COLOR_HEX, COLOR_JA, FLAGS, REGIONS, REGION_JA } from "@/lib/flags";
+import { COLORS, COLOR_HEX, COLOR_JA, FLAGS, REGIONS, REGION_JA, SYMBOLS, SYMBOL_ICON, SYMBOL_JA } from "@/lib/flags";
 import {
   baseScore,
   bonusValue,
@@ -17,6 +17,7 @@ import {
   roleDone,
   roleFlags,
   roleLabel,
+  rolePoints,
   scoreOf,
 } from "@/lib/rules";
 import type { ClientToServerEvents } from "@/lib/socketEvents";
@@ -244,9 +245,14 @@ function FlagImg({ flagId, className = "", secret = false }: { flagId: number; c
 
 function ColorDots({ flagId }: { flagId: number }) {
   return (
-    <span className="flex gap-0.5">
+    <span className="flex items-center gap-0.5">
       {FLAGS[flagId].colors.map((c) => (
         <span key={c} title={COLOR_JA[c]} className="h-2.5 w-2.5 rounded-full border border-white/40" style={{ background: COLOR_HEX[c] }} />
+      ))}
+      {FLAGS[flagId].symbols.map((s) => (
+        <span key={s} title={SYMBOL_JA[s]} className="text-[11px] leading-[10px] text-lamp-light">
+          {SYMBOL_ICON[s]}
+        </span>
       ))}
     </span>
   );
@@ -341,10 +347,16 @@ function PlayerBoard({
           </RoleCell>
         ))}
       </div>
-      <div className={`mt-1.5 grid grid-cols-3 gap-1.5 ${compact ? "" : "sm:grid-cols-5"}`}>
+      <div className={`mt-1.5 grid grid-cols-3 gap-1.5 ${compact ? "" : "sm:grid-cols-7"}`}>
         {REGIONS.map((r) => (
           <RoleCell key={r} player={player} role={`r:${r}`} target={targets.includes(`r:${r}`)} onRole={onRole}>
             {REGION_JA[r]}
+          </RoleCell>
+        ))}
+        {SYMBOLS.map((s) => (
+          <RoleCell key={s} player={player} role={`s:${s}`} target={targets.includes(`s:${s}`)} onRole={onRole}>
+            <span className="text-lamp-light">{SYMBOL_ICON[s]}</span>
+            {SYMBOL_JA[s]}
           </RoleCell>
         ))}
       </div>
@@ -435,7 +447,7 @@ function RoleCell({
         <b className="flex items-center gap-1 truncate text-ink">{children}</b>
         <span className={done ? "font-bold text-emerald-300" : "text-white/40"}>{done ? "✓" : `${flags.length}/${ROLE_SIZE}`}</span>
       </span>
-      {done && <span className="flex aspect-[20/3] items-center justify-center text-[11px] font-bold text-emerald-300/80">完成 +1点</span>}
+      {done && <span className="flex aspect-[20/3] items-center justify-center text-[11px] font-bold text-emerald-300/80">完成 +{rolePoints(role)}点</span>}
       <span className={done ? "hidden" : "grid grid-cols-5 gap-0.5"}>
         {Array.from({ length: ROLE_SIZE }, (_, i) =>
           flags[i] === undefined ? (
@@ -502,7 +514,7 @@ function LogPanel({ room }: { room: RoomState }) {
       case "place":
         return `${name(e.playerId)}: 保留の「${flag(e.flag)}」→ ${roleLabel(e.to)}`;
       case "complete":
-        return `🎉 ${name(e.playerId)}が${roleLabel(e.role)}を完成!(+1点)`;
+        return `🎉 ${name(e.playerId)}が${roleLabel(e.role)}を完成!(+${rolePoints(e.role)}点)`;
       case "bonus":
         return `${BONUS_ICON[e.kind]} ${name(e.playerId)}が「${BONUS_LABEL[e.kind]}」を${e.from ? `${name(e.from)}から奪った` : "獲得"}!(+${BONUS_POINTS}点)`;
       case "reshuffle":

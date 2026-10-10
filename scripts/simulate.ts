@@ -21,7 +21,7 @@ function check(room: RoomState) {
   add(room.turn?.pending ?? null);
   for (const p of room.players) {
     if (p.hold.length > HOLD_LIMIT) throw new Error("保留が上限超え");
-    for (const list of [...Object.values(p.colors), ...Object.values(p.regions)]) {
+    for (const list of [...Object.values(p.colors), ...Object.values(p.regions), ...Object.values(p.symbols)]) {
       if (list.length >= ROLE_SIZE) throw new Error("完成した役の国旗が捨て札に行っていない");
       list.forEach(add);
     }

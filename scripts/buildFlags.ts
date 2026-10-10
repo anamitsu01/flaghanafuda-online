@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { FLAG_LIST } from "../lib/flagList";
 import { nameLen } from "../lib/flags";
+import { MOON_FLAGS, STAR_FLAGS } from "../lib/flagSymbols";
 
 /** この割合(%)以上の面積を占める色を、その国旗の色として数える。 */
 const MIN_AREA = 2;
@@ -47,17 +48,20 @@ md += `- 文字数は「・」と( )の中を除いて数える。\n\n`;
 let total = 0;
 const colorCount: Record<string, number> = {};
 for (const [region, list] of Object.entries(FLAG_LIST)) {
-  md += `## ${REGION_JA[region]}(${list.length})\n\n| 国旗 | 国名 | 文字数 | 色 |\n|---|---|---|---|\n`;
+  md += `## ${REGION_JA[region]}(${list.length})\n\n| 国旗 | 国名 | 文字数 | 色 | 模様 |\n|---|---|---|---|---|\n`;
   for (const entry of list) {
     const [code, name] = entry.split("|");
     const cs = colors[code] ?? "";
     for (const c of cs) colorCount[c] = (colorCount[c] ?? 0) + 1;
-    md += `| ![](../public/flags/${code}.svg) | ${name} | ${nameLen(name)} | ${[...cs].map((c) => COLOR_JA[c]).join("・")} |\n`;
+    md += `| ![](../public/flags/${code}.svg) | ${name} | ${nameLen(name)} | ${[...cs].map((c) => COLOR_JA[c]).join("・")} | ${[STAR_FLAGS.includes(code) ? "星" : "", MOON_FLAGS.includes(code) ? "月" : ""].filter(Boolean).join("・")} |\n`;
     total++;
   }
   md += `\n`;
 }
 md += `## 色ごとの枚数(全${total}枚)\n\n| 色 | 枚数 | 割合 |\n|---|---|---|\n`;
 for (const c of ORDER) md += `| ${COLOR_JA[c]} | ${colorCount[c]} | ${Math.round((colorCount[c] / total) * 100)}% |\n`;
+md += `\n## 模様ごとの枚数\n\n| 模様 | 枚数 | 割合 |\n|---|---|---|\n`;
+md += `| 星 | ${STAR_FLAGS.length} | ${Math.round((STAR_FLAGS.length / total) * 100)}% |\n`;
+md += `| 月 | ${MOON_FLAGS.length} | ${Math.round((MOON_FLAGS.length / total) * 100)}% |\n`;
 writeFileSync(path.join("docs", "国名一覧.md"), md);
 console.log(`${total} 件`, colorCount);
