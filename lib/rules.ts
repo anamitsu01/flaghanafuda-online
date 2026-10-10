@@ -5,7 +5,6 @@ import {
   BONUS_POINTS,
   HOLD_LIMIT,
   NAME_GOAL,
-  ROLE_SIZE,
   TAKES_PER_TURN,
   type BonusKind,
   type Player,
@@ -26,12 +25,16 @@ export function roleFlags(player: Player, role: RoleKey): number[] {
   return kind === "c" ? player.colors[key as Color] : player.regions[key as Region];
 }
 
+export function roleDone(player: Player, role: RoleKey): boolean {
+  return player.done.includes(role);
+}
+
 export function colorRolesDone(player: Player): number {
-  return COLORS.filter((c) => player.colors[c].length >= ROLE_SIZE).length;
+  return COLORS.filter((c) => roleDone(player, `c:${c}`)).length;
 }
 
 export function regionRolesDone(player: Player): number {
-  return REGIONS.filter((r) => player.regions[r].length >= ROLE_SIZE).length;
+  return REGIONS.filter((r) => roleDone(player, `r:${r}`)).length;
 }
 
 export function nameLength(player: Player): number {
@@ -67,7 +70,7 @@ export function placeError(player: Player, turn: TurnState, flagId: number, role
   const [kind, key] = role.split(":");
   if (kind === "c" && !flag.colors.includes(key as Color)) return `${flag.name}に${COLOR_JA[key as Color]}はありません`;
   if (kind === "r" && flag.region !== key) return `${flag.name}は${REGION_JA[key as Region]}ではありません`;
-  if (roleFlags(player, role).length >= ROLE_SIZE) return `${roleLabel(role)}はもう完成しています`;
+  if (roleDone(player, role)) return `${roleLabel(role)}はもう完成しています`;
   if (turn.used.includes(role)) return `${roleLabel(role)}には、このターンもう1枚置いています`;
   return null;
 }
@@ -83,8 +86,13 @@ export function canHold(player: Player): boolean {
   return player.hold.length < HOLD_LIMIT;
 }
 
+/** Flags that can still be drawn: the deck plus the discard pile that refills it. */
+export function deckAvailable(room: RoomState): number {
+  return room.deckCount + room.discard.length;
+}
+
 export function cardsAvailable(room: RoomState): number {
-  return room.deckCount + room.market.filter((m) => m !== null).length;
+  return deckAvailable(room) + room.market.filter((m) => m !== null).length;
 }
 
 /** Held flags may only be played before the first take of the turn. */

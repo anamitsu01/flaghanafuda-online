@@ -11,8 +11,10 @@ import {
   canPlayHeld,
   canTake,
   cardsAvailable,
+  deckAvailable,
   legalRoles,
   nameLength,
+  roleDone,
   roleFlags,
   roleLabel,
   scoreOf,
@@ -137,13 +139,14 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
             )
           )}
           <button
-            disabled={!myTurn || pending !== null || !canTake(turn!) || room.deckCount === 0}
+            disabled={!myTurn || pending !== null || !canTake(turn!) || deckAvailable(room) === 0}
             onClick={() => run(act("game:draw", {}))}
             className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-lamp-deep bg-gradient-to-br from-lamp-deep/60 to-black/40 p-2 enabled:hover:border-lamp disabled:opacity-60"
           >
             <span className="text-2xl">🂠</span>
             <span className="text-xs font-bold text-lamp-light">山札</span>
             <span className="text-xs text-white/50">残り{room.deckCount}枚</span>
+            <span className="text-[10px] text-white/35">捨て札{room.discard.length}枚</span>
           </button>
           {pending !== null ? (
             <div className="flex flex-col gap-1">
@@ -368,7 +371,7 @@ function RoleCell({
   children: React.ReactNode;
 }) {
   const flags = roleFlags(player, role);
-  const done = flags.length >= ROLE_SIZE;
+  const done = roleDone(player, role);
   return (
     <button
       disabled={!target}
@@ -381,7 +384,8 @@ function RoleCell({
         <b className="flex items-center gap-1 truncate text-ink">{children}</b>
         <span className={done ? "font-bold text-emerald-300" : "text-white/40"}>{done ? "✓" : `${flags.length}/${ROLE_SIZE}`}</span>
       </span>
-      <span className="grid grid-cols-5 gap-0.5">
+      {done && <span className="flex aspect-[20/3] items-center justify-center text-[11px] font-bold text-emerald-300/80">完成 +1点</span>}
+      <span className={done ? "hidden" : "grid grid-cols-5 gap-0.5"}>
         {Array.from({ length: ROLE_SIZE }, (_, i) =>
           flags[i] === undefined ? (
             <span key={`empty-${i}`} className="aspect-[4/3] rounded-sm border border-dashed border-white/10" />
@@ -449,6 +453,8 @@ function LogPanel({ room }: { room: RoomState }) {
         return `🎉 ${name(e.playerId)}が${roleLabel(e.role)}を完成!(+1点)`;
       case "bonus":
         return `${BONUS_ICON[e.kind]} ${name(e.playerId)}が「${BONUS_LABEL[e.kind]}」を${e.from ? `${name(e.from)}から奪った` : "獲得"}!(+${BONUS_POINTS}点)`;
+      case "reshuffle":
+        return `♻️ 山札がなくなったので、捨て札${e.count}枚を混ぜて山札にした`;
       case "skip":
         return `${name(e.playerId)}の手番を飛ばした`;
       case "win":

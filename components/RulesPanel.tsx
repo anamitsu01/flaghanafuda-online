@@ -42,7 +42,10 @@ export function RulesContent({ className = "" }: { className?: string }) {
           <b className="text-ink">国名役</b>: 国名をつなげて合計{NAME_GOAL}文字以上で完成、1点。完成したあとも置き続けられる。どんな国旗でも置ける。「・」と( )の中は文字数に数えない。
         </li>
       </ul>
-      <p>完成した色役・地域役には、もう置けない。同じ役をもう一度作ることもできない。</p>
+      <p>
+        完成した色役・地域役には、もう置けない。同じ役をもう一度作ることもできない。
+        完成した役の国旗5枚は<b className="text-ink">捨て札</b>になり、山札がなくなると捨て札を混ぜ直して新しい山札にする(国名役の国旗は残る)。
+      </p>
       <p>
         <b className="text-ink">最多ボーナス</b>(各+{BONUS_POINTS}点): 色役をいちばん多く完成させた人({BONUS_MIN_ROLES}役以上)、
         地域役をいちばん多く完成させた人({BONUS_MIN_ROLES}役以上)、国名役がいちばん長い人(完成済み)。
@@ -57,7 +60,7 @@ export function RulesContent({ className = "" }: { className?: string }) {
         <b className="text-ink">色の数え方</b>: 国旗の面積のおよそ2%以上を占める色を数える。オレンジや金色は黄、えんじ色は赤、水色や紺色は青として扱う。
         カードの色の丸が、その国旗で使える色。
       </p>
-      <p className="text-white/45">山札と公開の国旗がなくなった場合は、そのラウンドの終わりにいちばん点が高い人の勝ち。</p>
+      <p className="text-white/45">山札・捨て札・公開の国旗がすべてなくなった場合は、そのラウンドの終わりにいちばん点が高い人の勝ち。</p>
     </div>
   );
 }

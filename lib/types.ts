@@ -10,7 +10,9 @@ export interface Player {
   isHost: boolean;
   /** Server-driven test player (only in test rooms). */
   isBot: boolean;
-  /** Flag ids placed in each color role (complete at ROLE_SIZE). */
+  /** Completed color/region roles. Their flags have gone to the discard pile. */
+  done: RoleKey[];
+  /** Flag ids placed in each color role that is still being built. */
   colors: Record<Color, number[]>;
   regions: Record<Region, number[]>;
   /** Name role, in the order the flags were added. */
@@ -37,6 +39,7 @@ export type PublicEvent =
   | { type: "place"; playerId: string; flag: number; to: RoleKey }
   | { type: "complete"; playerId: string; role: RoleKey }
   | { type: "bonus"; kind: BonusKind; playerId: string; from: string | null }
+  | { type: "reshuffle"; count: number }
   | { type: "skip"; playerId: string }
   | { type: "win"; winners: string[]; reason: EndReason };
 
@@ -57,6 +60,8 @@ export interface RoomState {
   /** Server only; emptied for clients (see deckCount). */
   deck: number[];
   deckCount: number;
+  /** Flags from completed color/region roles; shuffled back into the deck when it runs out. */
+  discard: number[];
   /** Open flags. A taken slot stays null until the turn ends. */
   market: (number | null)[];
   order: string[];

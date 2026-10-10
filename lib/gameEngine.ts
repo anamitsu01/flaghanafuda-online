@@ -59,8 +59,9 @@ function makeRoomCode(): string {
 // ---------------------------------------------------------------------------
 // Rooms and lobby
 
-function emptyBoard(): Pick<Player, "colors" | "regions" | "names" | "hold"> {
+function emptyBoard(): Pick<Player, "done" | "colors" | "regions" | "names" | "hold"> {
   return {
+    done: [],
     colors: Object.fromEntries(COLORS.map((c) => [c, []])) as unknown as Record<Color, number[]>,
     regions: Object.fromEntries(REGIONS.map((r) => [r, []])) as unknown as Record<Region, number[]>,
     names: [],
@@ -81,6 +82,7 @@ export function createRoom(hostId: string, hostName: string, isTest = false): Ro
     settings: { targetScore: DEFAULT_TARGET },
     deck: [],
     deckCount: 0,
+    discard: [],
     market: [],
     order: [],
     turnIndex: 0,
@@ -152,6 +154,7 @@ function dealNewGame(prev: RoomState): RoomState {
   r.deck = shuffle(FLAGS.map((f) => f.id));
   r.market = r.deck.splice(0, MARKET_SIZE);
   r.deckCount = r.deck.length;
+  r.discard = [];
   // Turn order is random each game.
   r.order = shuffle(r.players.map((p) => p.id));
   r.turnIndex = 0;
@@ -201,6 +204,18 @@ function log(room: RoomState, event: PublicEvent) {
   if (room.log.length > LOG_LIMIT) room.log.splice(0, room.log.length - LOG_LIMIT);
 }
 
+/** Top flag of the deck; an empty deck is first rebuilt from the discard pile. */
+function drawTop(room: RoomState): number | undefined {
+  if (room.deck.length === 0 && room.discard.length > 0) {
+    room.deck = shuffle(room.discard);
+    room.discard = [];
+    log(room, { type: "reshuffle", count: room.deck.length });
+  }
+  const flagId = room.deck.shift();
+  room.deckCount = room.deck.length;
+  return flagId;
+}
+
 function beginTurn(room: RoomState) {
   room.turn = { playerId: room.order[room.turnIndex], taken: 0, pending: null, used: [] };
 }
@@ -240,7 +255,12 @@ function place(room: RoomState, player: Player, turn: TurnState, flagId: number,
   const flags = roleFlags(player, role);
   flags.push(flagId);
   turn.used.push(role);
-  if (flags.length >= ROLE_SIZE) log(room, { type: "complete", playerId: player.id, role });
+  if (flags.length >= ROLE_SIZE) {
+    // A finished role stays scored, but its flags go back into circulation.
+    player.done.push(role);
+    room.discard.push(...flags.splice(0));
+    log(room, { type: "complete", playerId: player.id, role });
+  }
   updateBonus(room, player, role.startsWith("c:") ? "color" : "region");
 }
 
@@ -259,8 +279,7 @@ function topScorers(room: RoomState, players: Player[]): Player[] {
 
 function endTurn(room: RoomState) {
   // The market is only refilled once the turn is over.
-  room.market = room.market.map((m) => m ?? room.deck.shift() ?? null);
-  room.deckCount = room.deck.length;
+  room.market = room.market.map((m) => m ?? drawTop(room) ?? null);
 
   room.turnIndex++;
   if (room.turnIndex < room.order.length) return beginTurn(room);
@@ -309,9 +328,8 @@ export function takeMarket(room: RoomState, playerId: string, flagId: number, ro
 export function drawDeck(room: RoomState, playerId: string): RoomState {
   const { r, turn } = act(room, playerId);
   if (!canTake(turn)) throw new GameError("いまは国旗を取れません");
-  const flagId = r.deck.shift();
+  const flagId = drawTop(r);
   if (flagId === undefined) throw new GameError("山札がありません");
-  r.deckCount = r.deck.length;
   turn.pending = flagId;
   return r;
 }

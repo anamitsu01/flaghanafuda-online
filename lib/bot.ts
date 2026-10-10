@@ -1,6 +1,6 @@
 import { FLAGS } from "./flags";
 import { drawDeck, passTurn, placeHeld, resolveDraw, takeMarket } from "./gameEngine";
-import { canHold, canPlayHeld, legalRoles, nameLength, roleFlags } from "./rules";
+import { canHold, canPlayHeld, deckAvailable, legalRoles, nameLength, roleFlags } from "./rules";
 import { NAME_GOAL, type Player, type RoleKey, type RoomState, type TurnState } from "./types";
 
 /** How much the bot likes putting `flagId` into `role`: roles closer to done score higher. */
@@ -39,7 +39,7 @@ export function botAct(room: RoomState, botId: string): RoomState {
   const open = room.market
     .flatMap((flagId) => (flagId === null ? [] : [{ flagId, ...best(room, bot, turn, flagId) }]))
     .sort((a, b) => b.value - a.value);
-  if (open[0] && (open[0].value >= 3 || room.deckCount === 0)) return takeMarket(room, botId, open[0].flagId, open[0].role);
-  if (room.deckCount > 0) return drawDeck(room, botId);
+  if (open[0] && (open[0].value >= 3 || deckAvailable(room) === 0)) return takeMarket(room, botId, open[0].flagId, open[0].role);
+  if (deckAvailable(room) > 0) return drawDeck(room, botId);
   return passTurn(room, botId);
 }

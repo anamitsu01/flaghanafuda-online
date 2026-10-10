@@ -16,12 +16,13 @@ function check(room: RoomState) {
     seen.add(id);
   };
   room.deck.forEach(add);
+  room.discard.forEach(add);
   room.market.forEach(add);
   add(room.turn?.pending ?? null);
   for (const p of room.players) {
     if (p.hold.length > HOLD_LIMIT) throw new Error("保留が上限超え");
     for (const list of [...Object.values(p.colors), ...Object.values(p.regions)]) {
-      if (list.length > ROLE_SIZE) throw new Error("役が5枚超え");
+      if (list.length >= ROLE_SIZE) throw new Error("完成した役の国旗が捨て札に行っていない");
       list.forEach(add);
     }
     p.names.forEach(add);
