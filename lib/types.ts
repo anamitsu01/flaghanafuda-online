@@ -17,7 +17,7 @@ export interface Player {
   regions: Record<Region, number[]>;
   /** Name role, in the order the flags were added. */
   names: number[];
-  /** Deck flags kept without a role yet (public). */
+  /** Deck flags kept without a role yet. Only the owner sees them; others get HIDDEN_FLAG. */
   hold: number[];
 }
 
@@ -25,7 +25,9 @@ export interface TurnState {
   playerId: string;
   /** Flags taken this turn (market or deck), 0..TAKES_PER_TURN. */
   taken: number;
-  /** Flag just drawn from the deck, waiting to be placed or held. */
+  /** Open flag the player has committed to; it must now be given a role. */
+  picked: number | null;
+  /** Flag just drawn from the deck, waiting to be placed or held (HIDDEN_FLAG for other players). */
   pending: number | null;
   /** Color/region roles that already received a flag this turn. */
   used: RoleKey[];
@@ -75,6 +77,9 @@ export interface RoomState {
   endReason: EndReason | null;
   createdAt: number;
 }
+
+/** Stands in for a flag the viewer isn't allowed to see. */
+export const HIDDEN_FLAG = -1;
 
 /** Entering this room code opens a fresh private test room with bots. */
 export const TEST_ROOM_CODE = "ZZZZZ";

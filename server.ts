@@ -12,6 +12,7 @@ import {
   hostSkip,
   markConnection,
   passTurn,
+  pickMarket,
   placeHeld,
   playAgain,
   removeBot,
@@ -53,7 +54,7 @@ function broadcastRoom(io: IO, room: RoomState) {
   saveRoom(room);
   for (const player of room.players) {
     if (player.isBot) continue;
-    io.to(playerRoomTag(room.code, player.id)).emit("room:update", sanitizeForPlayer(room));
+    io.to(playerRoomTag(room.code, player.id)).emit("room:update", sanitizeForPlayer(room, player.id));
   }
   scheduleBot(io, room.code);
 }
@@ -115,7 +116,7 @@ app.prepare().then(() => {
         socket.join(roomTag(room.code));
         socket.join(playerRoomTag(room.code, socket.id));
         saveRoom(room);
-        cb(ok({ room: sanitizeForPlayer(room), playerId: socket.id }));
+        cb(ok({ room: sanitizeForPlayer(room, socket.id), playerId: socket.id }));
       } catch (e) {
         cb(fail(e instanceof Error ? e.message : "不明なエラー"));
       }
@@ -131,7 +132,7 @@ app.prepare().then(() => {
         socket.join(roomTag(room.code));
         socket.join(playerRoomTag(room.code, socket.id));
         saveRoom(room);
-        cb(ok({ room: sanitizeForPlayer(room), playerId: socket.id }));
+        cb(ok({ room: sanitizeForPlayer(room, socket.id), playerId: socket.id }));
       } catch (e) {
         cb(fail(e instanceof Error ? e.message : "不明なエラー"));
       }
@@ -148,7 +149,7 @@ app.prepare().then(() => {
         socket.join(roomTag(updated.code));
         socket.join(playerRoomTag(updated.code, socket.id));
         broadcastRoom(io, updated);
-        cb(ok({ room: sanitizeForPlayer(updated), playerId: socket.id }));
+        cb(ok({ room: sanitizeForPlayer(updated, socket.id), playerId: socket.id }));
       } catch (e) {
         cb(fail(e instanceof Error ? e.message : "不明なエラー"));
       }
@@ -167,7 +168,7 @@ app.prepare().then(() => {
         socket.join(roomTag(updated.code));
         socket.join(playerRoomTag(updated.code, playerId));
         broadcastRoom(io, updated);
-        cb(ok({ room: sanitizeForPlayer(updated) }));
+        cb(ok({ room: sanitizeForPlayer(updated, playerId) }));
       } catch (e) {
         cb(fail(e instanceof Error ? e.message : "不明なエラー"));
       }
@@ -209,8 +210,12 @@ app.prepare().then(() => {
       withRoom(code, (room) => placeHeld(room, socket.data.playerId ?? socket.id, flag, role), cb);
     });
 
-    socket.on("game:takeMarket", ({ code, flag, role }, cb) => {
-      withRoom(code, (room) => takeMarket(room, socket.data.playerId ?? socket.id, flag, role), cb);
+    socket.on("game:pick", ({ code, flag }, cb) => {
+      withRoom(code, (room) => pickMarket(room, socket.data.playerId ?? socket.id, flag), cb);
+    });
+
+    socket.on("game:takeMarket", ({ code, role }, cb) => {
+      withRoom(code, (room) => takeMarket(room, socket.data.playerId ?? socket.id, role), cb);
     });
 
     socket.on("game:draw", ({ code }, cb) => {

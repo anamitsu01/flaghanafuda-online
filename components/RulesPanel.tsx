@@ -25,6 +25,12 @@ export function RulesContent({ className = "" }: { className?: string }) {
         公開から取った国旗は、その場で置き場所を決める。山札から引いた国旗は、すぐ置くか、<b className="text-ink">保留</b>(最大{HOLD_LIMIT}枚)にできる。
       </p>
       <p>
+        <b className="text-ink">公開の国旗</b>: 見えるのは絵柄と色だけ。選んで「はい」と答えると国名・地域・文字数が分かるが、もう選び直せない(置く役はそのあと決める)。
+      </p>
+      <p>
+        <b className="text-ink">山札の国旗</b>: 引いた本人にはすぐ国名と地域が分かる。保留している国旗は、ほかの人には見えない。
+      </p>
+      <p>
         <b className="text-ink">保留カード</b>: 自分の手番の最初、国旗を取る前にだけ、好きな枚数を役に置ける。
       </p>
       <p>

@@ -97,9 +97,9 @@ export function cardsAvailable(room: RoomState): number {
 
 /** Held flags may only be played before the first take of the turn. */
 export function canPlayHeld(turn: TurnState): boolean {
-  return turn.taken === 0 && turn.pending === null;
+  return turn.taken === 0 && turn.pending === null && turn.picked === null;
 }
 
 export function canTake(turn: TurnState): boolean {
-  return turn.taken < TAKES_PER_TURN && turn.pending === null;
+  return turn.taken < TAKES_PER_TURN && turn.pending === null && turn.picked === null;
 }

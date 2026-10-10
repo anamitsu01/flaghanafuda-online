@@ -12,6 +12,7 @@ import {
 } from "./rules";
 import {
   DEFAULT_TARGET,
+  HIDDEN_FLAG,
   MARKET_SIZE,
   MAX_PLAYERS,
   MIN_PLAYERS,
@@ -217,7 +218,7 @@ function drawTop(room: RoomState): number | undefined {
 }
 
 function beginTurn(room: RoomState) {
-  room.turn = { playerId: room.order[room.turnIndex], taken: 0, pending: null, used: [] };
+  room.turn = { playerId: room.order[room.turnIndex], taken: 0, picked: null, pending: null, used: [] };
 }
 
 /** Clones the room and returns it with the acting player and their turn. */
@@ -311,14 +312,23 @@ export function placeHeld(room: RoomState, playerId: string, flagId: number, rol
   return r;
 }
 
-/** Take an open flag; its role has to be decided on the spot. */
-export function takeMarket(room: RoomState, playerId: string, flagId: number, role: RoleKey): RoomState {
-  const { r, player, turn } = act(room, playerId);
+/** Commit to an open flag. Its name is only shown after this, so there is no going back. */
+export function pickMarket(room: RoomState, playerId: string, flagId: number): RoomState {
+  const { r, turn } = act(room, playerId);
   if (!canTake(turn)) throw new GameError("いまは国旗を取れません");
-  const slot = r.market.indexOf(flagId);
-  if (slot < 0) throw new GameError("その国旗は公開されていません");
+  if (!r.market.includes(flagId)) throw new GameError("その国旗は公開されていません");
+  turn.picked = flagId;
+  return r;
+}
+
+/** Give the picked open flag its role. */
+export function takeMarket(room: RoomState, playerId: string, role: RoleKey): RoomState {
+  const { r, player, turn } = act(room, playerId);
+  const flagId = turn.picked;
+  if (flagId === null) throw new GameError("先に公開の国旗を選んでください");
   place(r, player, turn, flagId, role);
-  r.market[slot] = null;
+  r.market[r.market.indexOf(flagId)] = null;
+  turn.picked = null;
   log(r, { type: "take", playerId, flag: flagId, from: "market", to: role });
   afterTake(r, turn);
   return r;
@@ -354,7 +364,7 @@ export function resolveDraw(room: RoomState, playerId: string, to: RoleKey | "ho
 /** Only needed when there is nothing left to take. */
 export function passTurn(room: RoomState, playerId: string): RoomState {
   const { r, turn } = act(room, playerId);
-  if (turn.pending !== null) throw new GameError("引いた国旗の置き場所を決めてください");
+  if (turn.pending !== null || turn.picked !== null) throw new GameError("選んだ国旗の置き場所を決めてください");
   if (cardsAvailable(r) > 0) throw new GameError("国旗を2枚取ってください");
   endTurn(r);
   return r;
@@ -384,7 +394,17 @@ export function hostSkip(room: RoomState, requesterId: string): RoomState {
 // ---------------------------------------------------------------------------
 // Visibility
 
-/** Everything is open information except the order of the deck. */
-export function sanitizeForPlayer(room: RoomState): RoomState {
-  return { ...room, deck: [] };
+/**
+ * Hidden from a viewer: the order of the deck, and flags other players drew
+ * from it that haven't reached a role yet (their hold and the flag in hand).
+ */
+export function sanitizeForPlayer(room: RoomState, viewerId: string): RoomState {
+  const turn = room.turn;
+  return {
+    ...room,
+    deck: [],
+    players: room.players.map((p) => (p.id === viewerId ? p : { ...p, hold: p.hold.map(() => HIDDEN_FLAG) })),
+    turn: turn && turn.pending !== null && turn.playerId !== viewerId ? { ...turn, pending: HIDDEN_FLAG } : turn,
+    log: room.log.map((e) => (e.type === "take" && e.to === "hold" && e.playerId !== viewerId ? { ...e, flag: HIDDEN_FLAG } : e)),
+  };
 }

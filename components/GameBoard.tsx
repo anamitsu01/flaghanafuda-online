@@ -21,21 +21,20 @@ import {
 } from "@/lib/rules";
 import type { ClientToServerEvents } from "@/lib/socketEvents";
 import type { BonusKind, Player, PublicEvent, RoleKey, RoomState } from "@/lib/types";
-import { BONUS_POINTS, HOLD_LIMIT, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
+import { BONUS_POINTS, HIDDEN_FLAG, HOLD_LIMIT, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
 
 type Act = <E extends keyof ClientToServerEvents>(
   event: E,
   payload: Omit<Parameters<ClientToServerEvents[E]>[0], "code">
 ) => Promise<string | null>;
 
-type Selection = { src: "market" | "hold"; flag: number };
-
 const BONUS_LABEL: Record<BonusKind, string> = { color: "色役最多", region: "地域役最多", name: "最長国名" };
 const BONUS_ICON: Record<BonusKind, string> = { color: "🎨", region: "🌍", name: "🔤" };
 const BONUS_KINDS: BonusKind[] = ["color", "region", "name"];
 
 export default function GameBoard({ room, viewerId, act }: { room: RoomState; viewerId: string; act: Act }) {
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const [heldSelection, setHeldSelection] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const me = room.players.find((p) => p.id === viewerId);
@@ -43,36 +42,25 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
   const actor = turn ? room.players.find((p) => p.id === turn.playerId) : undefined;
   const myTurn = !!me && !!turn && turn.playerId === viewerId;
   const pending = turn?.pending ?? null;
+  const picked = turn?.picked ?? null;
 
-  // A selection only counts while it is still something I could act on.
-  const sel =
-    selection && myTurn && me && pending === null
-      ? selection.src === "market"
-        ? canTake(turn!) && room.market.includes(selection.flag)
-          ? selection
-          : null
-        : canPlayHeld(turn!) && me.hold.includes(selection.flag)
-          ? selection
-          : null
-      : null;
-  const activeFlag = myTurn ? (pending ?? sel?.flag ?? null) : null;
+  // Local choices only count while they are still something I could act on.
+  const held = heldSelection !== null && myTurn && canPlayHeld(turn!) && me!.hold.includes(heldSelection) ? heldSelection : null;
+  const asking = confirming !== null && myTurn && canTake(turn!) && room.market.includes(confirming) ? confirming : null;
+  const activeFlag = myTurn ? (pending ?? picked ?? held) : null;
   const targets = activeFlag !== null && me && turn ? legalRoles(me, turn, activeFlag) : [];
 
   async function run(p: Promise<string | null>) {
     setError(await p);
-    setSelection(null);
+    setHeldSelection(null);
+    setConfirming(null);
   }
 
   function placeAt(role: RoleKey) {
     if (activeFlag === null) return;
     if (pending !== null) run(act("game:resolveDraw", { to: role }));
-    else if (sel?.src === "market") run(act("game:takeMarket", { flag: activeFlag, role }));
+    else if (picked !== null) run(act("game:takeMarket", { role }));
     else run(act("game:placeHeld", { flag: activeFlag, role }));
-  }
-
-  function toggle(next: Selection) {
-    setError(null);
-    setSelection(sel && sel.flag === next.flag ? null : next);
   }
 
   const takesLeft = turn ? TAKES_PER_TURN - turn.taken : 0;
@@ -83,9 +71,11 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
       ? `${actor?.name ?? "?"}さんの手番です`
       : pending !== null
         ? "引いた国旗を置く役を選ぶか、保留してください"
-        : sel
-          ? "光っている役をタップして置きます"
-          : nothingToTake
+        : picked !== null
+          ? "選んだ国旗を置く役をタップしてください(もう変更できません)"
+          : held !== null
+            ? "光っている役をタップして置きます"
+            : nothingToTake
             ? "取れる国旗がありません。保留カードを置いたら手番を終えてください"
             : turn.taken === 0 && me!.hold.length > 0
               ? `保留カードを置くなら今(国旗を取ると置けません)。その後、国旗を${takesLeft}枚取ります`
@@ -106,7 +96,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
           <span className="rounded-full bg-red-500/20 px-3 py-0.5 text-sm font-bold text-red-300">最終ラウンド!</span>
         )}
         {hint && <span className={`text-sm font-semibold ${myTurn ? "text-lamp-light" : "text-white/70"}`}>{hint}</span>}
-        {myTurn && nothingToTake && pending === null && (
+        {myTurn && nothingToTake && pending === null && picked === null && (
           <button onClick={() => run(act("game:pass", {}))} className="rounded-full bg-lamp px-4 py-1 text-sm font-bold text-black hover:bg-lamp-light">
             手番を終える
           </button>
@@ -133,13 +123,22 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
               <FlagCard
                 key={flagId}
                 flagId={flagId}
-                selected={sel?.flag === flagId}
-                onClick={myTurn && pending === null && canTake(turn!) ? () => toggle({ src: "market", flag: flagId }) : undefined}
+                reveal={picked === flagId}
+                selected={picked === flagId || asking === flagId}
+                onClick={
+                  myTurn && canTake(turn!)
+                    ? () => {
+                        setError(null);
+                        setHeldSelection(null);
+                        setConfirming(flagId);
+                      }
+                    : undefined
+                }
               />
             )
           )}
           <button
-            disabled={!myTurn || pending !== null || !canTake(turn!) || deckAvailable(room) === 0}
+            disabled={!myTurn || !canTake(turn!) || deckAvailable(room) === 0}
             onClick={() => run(act("game:draw", {}))}
             className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-lamp-deep bg-gradient-to-br from-lamp-deep/60 to-black/40 p-2 enabled:hover:border-lamp disabled:opacity-60"
           >
@@ -150,7 +149,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
           </button>
           {pending !== null ? (
             <div className="flex flex-col gap-1">
-              <FlagCard flagId={pending} selected />
+              <FlagCard flagId={pending} reveal selected />
               {myTurn && me && canHold(me) && (
                 <button
                   onClick={() => run(act("game:resolveDraw", { to: "hold" }))}
@@ -176,8 +175,15 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
           isTurn={myTurn}
           targets={targets}
           onRole={placeAt}
-          selectedFlag={sel?.src === "hold" ? sel.flag : null}
-          onHold={myTurn && pending === null && canPlayHeld(turn!) ? (flag) => toggle({ src: "hold", flag }) : undefined}
+          selectedFlag={held}
+          onHold={
+            myTurn && canPlayHeld(turn!)
+              ? (flag) => {
+                  setError(null);
+                  setHeldSelection(held === flag ? null : flag);
+                }
+              : undefined
+          }
         />
       )}
 
@@ -188,17 +194,49 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
       </div>
 
       <LogPanel room={room} />
+
+      {asking !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" role="dialog" aria-modal="true" onClick={() => setConfirming(null)}>
+          <div className="w-full max-w-xs rounded-xl border border-white/10 bg-panel p-5 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <FlagImg flagId={asking} secret className="mx-auto mb-3 w-40" />
+            <div className="mb-3 flex justify-center">
+              <ColorDots flagId={asking} />
+            </div>
+            <h2 className="mb-1 text-lg font-bold">このカードでいいですか?</h2>
+            <p className="mb-4 text-xs text-white/50">「はい」を選ぶと変更できません。国名と地域はそのあと分かります。</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirming(null)} className="flex-1 rounded-full border border-white/15 px-4 py-2 font-semibold hover:bg-white/10">
+                いいえ
+              </button>
+              <button onClick={() => run(act("game:pick", { flag: asking }))} className="flex-1 rounded-full bg-lamp px-4 py-2 font-bold text-black hover:bg-lamp-light">
+                はい
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function FlagImg({ flagId, className = "" }: { flagId: number; className?: string }) {
+/** `secret`: an open flag nobody has committed to yet, so its name must not leak through the tooltip. */
+function FlagImg({ flagId, className = "", secret = false }: { flagId: number; className?: string; secret?: boolean }) {
+  if (flagId === HIDDEN_FLAG) {
+    return (
+      <span
+        title="ほかの人には見えない国旗"
+        className={`flex aspect-[4/3] items-center justify-center rounded-sm border border-lamp-deep bg-gradient-to-br from-lamp-deep/70 to-black/40 text-lamp-light/70 ${className}`}
+      >
+        ?
+      </span>
+    );
+  }
   const flag = FLAGS[flagId];
   return (
     <img
       src={`/flags/${flag.code}.svg`}
-      alt={flag.name}
-      title={`${flag.name}(${flag.len}文字・${REGION_JA[flag.region]})`}
+      alt={secret ? "国旗" : flag.name}
+      title={secret ? undefined : `${flag.name}(${flag.len}文字・${REGION_JA[flag.region]})`}
       className={`aspect-[4/3] rounded-sm border border-white/20 bg-white/5 object-cover ${className}`}
     />
   );
@@ -214,24 +252,31 @@ function ColorDots({ flagId }: { flagId: number }) {
   );
 }
 
-function FlagCard({ flagId, selected, onClick }: { flagId: number; selected?: boolean; onClick?: () => void }) {
+/** Without `reveal` only the picture and its colors show: the name, region and length stay unknown. */
+function FlagCard({ flagId, reveal = false, selected, onClick }: { flagId: number; reveal?: boolean; selected?: boolean; onClick?: () => void }) {
+  const cls = `kk-pop flex flex-col items-center gap-1 rounded-lg border-2 bg-white/5 p-1.5 text-center ${
+    selected ? "border-lamp bg-lamp/15" : "border-white/10 enabled:hover:border-white/40"
+  }`;
+  if (flagId === HIDDEN_FLAG) {
+    return (
+      <div className={cls}>
+        <FlagImg flagId={flagId} className="w-full text-2xl" />
+      </div>
+    );
+  }
   const flag = FLAGS[flagId];
   return (
-    <button
-      disabled={!onClick}
-      onClick={onClick}
-      className={`kk-pop flex flex-col items-center gap-1 rounded-lg border-2 bg-white/5 p-1.5 text-center ${
-        selected ? "border-lamp bg-lamp/15" : "border-white/10 enabled:hover:border-white/40"
-      }`}
-    >
-      <FlagImg flagId={flagId} className="w-full" />
-      <span className="w-full truncate text-xs font-bold leading-tight text-ink" title={flag.name}>
-        {flag.name}
-      </span>
-      <span className="flex w-full items-center justify-between gap-1 text-[10px] text-white/50">
-        <span className="truncate">{REGION_JA[flag.region]}</span>
-        <span className="shrink-0">{flag.len}字</span>
-      </span>
+    <button disabled={!onClick} onClick={onClick} className={cls}>
+      <FlagImg flagId={flagId} secret={!reveal} className="w-full" />
+      {reveal && (
+        <>
+          <span className="w-full text-xs font-bold leading-tight text-ink">{flag.name}</span>
+          <span className="flex w-full items-center justify-between gap-1 text-[10px] text-white/50">
+            <span className="truncate">{REGION_JA[flag.region]}</span>
+            <span className="shrink-0">{flag.len}字</span>
+          </span>
+        </>
+      )}
       <ColorDots flagId={flagId} />
     </button>
   );
@@ -335,18 +380,24 @@ function PlayerBoard({
           <span className="flex gap-1">
             {Array.from({ length: HOLD_LIMIT }, (_, i) => {
               const flagId = player.hold[i];
-              if (flagId === undefined) return <span key={`empty-${i}`} className="aspect-[4/3] w-14 rounded border border-dashed border-white/10" />;
+              const size = isMe ? "w-20" : "w-10";
+              if (flagId === undefined) return <span key={`empty-${i}`} className={`aspect-[4/3] rounded border border-dashed border-white/10 ${size}`} />;
+              if (flagId === HIDDEN_FLAG) return <FlagImg key={`hidden-${i}`} flagId={flagId} className={`kk-pop ${size}`} />;
+              const flag = FLAGS[flagId];
               return (
                 <button
                   key={flagId}
                   disabled={!onHold}
                   onClick={() => onHold?.(flagId)}
-                  className={`kk-pop w-14 rounded border-2 p-0.5 ${
+                  className={`kk-pop rounded border-2 p-0.5 text-center ${size} ${
                     selectedFlag === flagId ? "border-lamp bg-lamp/15" : "border-transparent enabled:hover:border-white/40"
                   }`}
                 >
                   <FlagImg flagId={flagId} className="w-full" />
-                  <span className="block truncate text-[9px] leading-tight text-white/70">{FLAGS[flagId].name}</span>
+                  <span className="block text-[10px] font-bold leading-tight text-ink">{flag.name}</span>
+                  <span className="block text-[9px] leading-tight text-white/50">
+                    {REGION_JA[flag.region]}・{flag.len}字
+                  </span>
                 </button>
               );
             })}
@@ -440,12 +491,13 @@ function Result({ room, viewerId, act, onError }: { room: RoomState; viewerId: s
 
 function LogPanel({ room }: { room: RoomState }) {
   const name = (id: string | null) => room.players.find((p) => p.id === id)?.name ?? "?";
-  const flag = (id: number) => FLAGS[id].name;
+  const flag = (id: number) => FLAGS[id]?.name ?? "?";
   function text(e: PublicEvent): string {
     switch (e.type) {
       case "round":
         return `— 第${e.round}ラウンド —`;
       case "take":
+        if (e.flag === HIDDEN_FLAG) return `${name(e.playerId)}: 山札から1枚 → 保留`;
         return `${name(e.playerId)}: ${e.from === "market" ? "公開" : "山札"}から「${flag(e.flag)}」→ ${e.to === "hold" ? "保留" : roleLabel(e.to)}`;
       case "place":
         return `${name(e.playerId)}: 保留の「${flag(e.flag)}」→ ${roleLabel(e.to)}`;

@@ -13,7 +13,8 @@ export interface ClientToServerEvents {
   "room:addBot": (payload: { code: string }, cb: Ack) => void;
   "room:removeBot": (payload: { code: string; botId: string }, cb: Ack) => void;
   "game:placeHeld": (payload: { code: string; flag: number; role: RoleKey }, cb: Ack) => void;
-  "game:takeMarket": (payload: { code: string; flag: number; role: RoleKey }, cb: Ack) => void;
+  "game:pick": (payload: { code: string; flag: number }, cb: Ack) => void;
+  "game:takeMarket": (payload: { code: string; role: RoleKey }, cb: Ack) => void;
   "game:draw": (payload: { code: string }, cb: Ack) => void;
   "game:resolveDraw": (payload: { code: string; to: RoleKey | "hold" }, cb: Ack) => void;
   "game:pass": (payload: { code: string }, cb: Ack) => void;
