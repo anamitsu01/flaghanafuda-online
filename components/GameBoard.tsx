@@ -422,24 +422,25 @@ function PlayerBoard({
         ))}
       </div>
 
-      <div className={`grid grid-cols-3 gap-1.5 ${compact ? "" : "sm:grid-cols-6"}`}>
+      {/* Short labels (colors, symbols) share a row; the longer region names get wider cells. */}
+      <div className={`grid grid-cols-3 gap-1.5 sm:grid-cols-4 ${compact ? "" : "lg:grid-cols-8"}`}>
         {COLORS.map((c) => (
           <RoleCell key={c} player={player} role={`c:${c}`} target={targets.includes(`c:${c}`)} onRole={onRole}>
-            <span className="h-3 w-3 rounded-full border border-white/40" style={{ background: COLOR_HEX[c] }} />
+            <span className="h-3 w-3 shrink-0 rounded-full border border-white/40" style={{ background: COLOR_HEX[c] }} />
             {COLOR_JA[c]}
-          </RoleCell>
-        ))}
-      </div>
-      <div className={`mt-1.5 grid grid-cols-3 gap-1.5 ${compact ? "" : "sm:grid-cols-7"}`}>
-        {REGIONS.map((r) => (
-          <RoleCell key={r} player={player} role={`r:${r}`} target={targets.includes(`r:${r}`)} onRole={onRole}>
-            {REGION_JA[r]}
           </RoleCell>
         ))}
         {SYMBOLS.map((s) => (
           <RoleCell key={s} player={player} role={`s:${s}`} target={targets.includes(`s:${s}`)} onRole={onRole}>
             <span className="text-tri-white">{SYMBOL_ICON[s]}</span>
             {SYMBOL_JA[s]}
+          </RoleCell>
+        ))}
+      </div>
+      <div className={`mt-1.5 grid grid-cols-3 gap-1.5 ${compact ? "" : "md:grid-cols-5"}`}>
+        {REGIONS.map((r) => (
+          <RoleCell key={r} player={player} role={`r:${r}`} target={targets.includes(`r:${r}`)} onRole={onRole}>
+            {REGION_JA[r]}
           </RoleCell>
         ))}
       </div>
@@ -454,6 +455,7 @@ function PlayerBoard({
         >
           <span className="flex items-center gap-2 text-xs">
             <b className="text-ink">国名役</b>
+            <PointsTag points={rolePoints("name")} />
             <span className={len >= NAME_GOAL ? "font-bold text-emerald-300" : "text-white/50"}>
               {len} / {NAME_GOAL}文字{len >= NAME_GOAL && " ✓"}
             </span>
@@ -503,6 +505,15 @@ function PlayerBoard({
   );
 }
 
+/** What a role pays when completed; anything above 1 gets a solid white badge. */
+function PointsTag({ points }: { points: number }) {
+  return points > 1 ? (
+    <span className="shrink-0 rounded bg-tri-white px-1 text-[10px] font-black leading-4 text-black">{points}点</span>
+  ) : (
+    <span className="shrink-0 text-[10px] text-white/45">{points}点</span>
+  );
+}
+
 function RoleCell({
   player,
   role,
@@ -518,17 +529,27 @@ function RoleCell({
 }) {
   const flags = roleFlags(player, role);
   const done = roleDone(player, role);
+  const points = rolePoints(role);
+  // Roles worth more than the usual point stand out, so nobody has to read the rules to notice.
+  const special = points > 1;
   return (
     <button
       disabled={!target}
       onClick={() => onRole?.(role)}
       className={`flex flex-col gap-1 rounded-lg border p-1.5 text-left ${
-        target ? "kk-pulse cursor-pointer border-tri-red bg-tri-red/10" : done ? "border-emerald-400/40 bg-emerald-400/5" : "border-white/10 bg-white/[0.03]"
+        target
+          ? "kk-pulse cursor-pointer border-tri-red bg-tri-red/10"
+          : done
+            ? "border-emerald-400/40 bg-emerald-400/5"
+            : special
+              ? "border-tri-white/60 bg-white/[0.08]"
+              : "border-white/10 bg-white/[0.03]"
       }`}
     >
-      <span className="flex items-center justify-between gap-1 text-xs">
-        <b className="flex items-center gap-1 truncate text-ink">{children}</b>
-        <span className={done ? "font-bold text-emerald-300" : "text-white/40"}>{done ? "✓" : `${flags.length}/${ROLE_SIZE}`}</span>
+      <span className="flex items-center gap-1 text-xs">
+        <b className="flex min-w-0 items-center gap-1 truncate tracking-tight text-ink">{children}</b>
+        <PointsTag points={points} />
+        <span className={`ml-auto shrink-0 ${done ? "" : "hidden sm:inline"} ${done ? "font-bold text-emerald-300" : "text-white/40"}`}>{done ? "✓" : `${flags.length}/${ROLE_SIZE}`}</span>
       </span>
       {done && <span className="flex aspect-[20/3] items-center justify-center text-[11px] font-bold text-emerald-300/80">完成 +{rolePoints(role)}点</span>}
       <span className={done ? "hidden" : "grid grid-cols-5 gap-0.5"}>
