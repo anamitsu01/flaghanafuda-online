@@ -222,7 +222,7 @@ function drawTop(room: RoomState): number | undefined {
 }
 
 function beginTurn(room: RoomState) {
-  room.turn = { playerId: room.order[room.turnIndex], taken: 0, picked: null, pending: null, used: [] };
+  room.turn = { playerId: room.order[room.turnIndex], taken: 0, picked: null, bonus: false, pending: null, used: [] };
 }
 
 /** Clones the room and returns it with the acting player and their turn. */
@@ -284,7 +284,7 @@ function topScorers(room: RoomState, players: Player[]): Player[] {
 }
 
 function endTurn(room: RoomState) {
-  // The market is only refilled once the turn is over.
+  // Slots are refilled as flags are taken; this catches any left empty while the deck was out.
   room.market = room.market.map((m) => m ?? drawTop(room) ?? null);
 
   room.turnIndex++;
@@ -326,15 +326,28 @@ export function pickMarket(room: RoomState, playerId: string, flagId: number): R
   return r;
 }
 
-/** Give the picked open flag its role. */
+/**
+ * Give the picked open flag its role. Its slot is refilled at once, and if the
+ * new flag is from the same region the player gets that one too (it becomes
+ * `picked` and must be placed). A bonus flag never earns another bonus.
+ */
 export function takeMarket(room: RoomState, playerId: string, role: RoleKey): RoomState {
   const { r, player, turn } = act(room, playerId);
   const flagId = turn.picked;
   if (flagId === null) throw new GameError("先に公開の国旗を選んでください");
+  const wasBonus = turn.bonus;
   place(r, player, turn, flagId, role);
-  r.market[r.market.indexOf(flagId)] = null;
+  const refill = drawTop(r) ?? null;
+  r.market[r.market.indexOf(flagId)] = refill;
+  log(r, { type: "take", playerId, flag: flagId, from: wasBonus ? "bonus" : "market", to: role });
+  if (!wasBonus && refill !== null && FLAGS[refill].region === FLAGS[flagId].region) {
+    turn.picked = refill;
+    turn.bonus = true;
+    log(r, { type: "extra", playerId, flag: refill });
+    return r;
+  }
   turn.picked = null;
-  log(r, { type: "take", playerId, flag: flagId, from: "market", to: role });
+  turn.bonus = false;
   afterTake(r, turn);
   return r;
 }

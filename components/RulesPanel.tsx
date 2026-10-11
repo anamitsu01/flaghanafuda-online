@@ -18,7 +18,11 @@ export function RulesContent({ className = "" }: { className?: string }) {
       </p>
       <p>
         <b className="text-ink">手番</b>: 公開されている{MARKET_SIZE}枚と山札から、合わせて{TAKES_PER_TURN}枚の国旗を取る(公開2枚・公開1枚と山札1枚・山札2枚のどれでもよい)。
-        公開の国旗は取ってもすぐには補充されず、手番が終わってから{MARKET_SIZE}枚に戻る。
+        公開の国旗を取ると、山札からすぐ1枚補充される。
+      </p>
+      <p>
+        <b className="text-ink">ボーナス</b>: 補充された国旗が、いま取った国旗と<b className="text-ink">同じ地域</b>なら、その国旗ももらえる(必ず取って役に置く)。
+        {TAKES_PER_TURN}枚の数には入らない。ボーナスでもらった国旗の補充では、ボーナスは起きない。山札から引いたときも起きない。
       </p>
       <p>
         <b className="text-ink">置き場所</b>: 取った国旗は、色役・地域役・国名役のどれか1つに置く。

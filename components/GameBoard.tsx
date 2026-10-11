@@ -52,6 +52,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
     if (fresh <= 0) return;
     for (const e of room.log.slice(-fresh)) {
       if (e.type === "complete") play("complete", { volume: e.playerId === viewerId ? 1 : 0.5 });
+      if (e.type === "extra") play("bonus", { volume: e.playerId === viewerId ? 1 : 0.5 });
     }
   }, [room.eventCount, room.log, viewerId]);
 
@@ -93,7 +94,9 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
       : pending !== null
         ? "引いた国旗を置く役を選ぶか、保留してください"
         : picked !== null
-          ? "選んだ国旗を置く役をタップしてください(もう変更できません)"
+          ? turn.bonus
+            ? "🎁 ボーナス! 同じ地域の国旗が出ました。もう1枚、置く役をタップしてください"
+            : "選んだ国旗を置く役をタップしてください(もう変更できません)"
           : held !== null
             ? "光っている役をタップして置きます"
             : nothingToTake
@@ -614,7 +617,9 @@ function LogPanel({ room }: { room: RoomState }) {
         return `— 第${e.round}ラウンド —`;
       case "take":
         if (e.flag === HIDDEN_FLAG) return `${name(e.playerId)}: 山札から1枚 → 保留`;
-        return `${name(e.playerId)}: ${e.from === "market" ? "公開" : "山札"}から「${flag(e.flag)}」→ ${e.to === "hold" ? "保留" : roleLabel(e.to)}`;
+        return `${name(e.playerId)}: ${e.from === "market" ? "公開から" : e.from === "bonus" ? "ボーナスの" : "山札から"}「${flag(e.flag)}」→ ${e.to === "hold" ? "保留" : roleLabel(e.to)}`;
+      case "extra":
+        return `🎁 ${name(e.playerId)}にボーナス! 補充された「${flag(e.flag)}」が同じ地域だった`;
       case "place":
         return `${name(e.playerId)}: 保留の「${flag(e.flag)}」→ ${roleLabel(e.to)}`;
       case "complete":
@@ -651,7 +656,7 @@ function LogPanel({ room }: { room: RoomState }) {
       </div>
       <ul className="max-h-48 space-y-0.5 overflow-y-auto text-white/60">
         {[...room.log].reverse().map((e, i) => (
-          <li key={room.log.length - i} className={e.type === "complete" || e.type === "bonus" || e.type === "win" ? "text-tri-blue-light" : ""}>
+          <li key={room.log.length - i} className={e.type === "complete" || e.type === "bonus" || e.type === "extra" || e.type === "win" ? "text-tri-blue-light" : ""}>
             {text(e)}
           </li>
         ))}

@@ -28,6 +28,8 @@ export interface TurnState {
   taken: number;
   /** Open flag the player has committed to; it must now be given a role. */
   picked: number | null;
+  /** `picked` is a bonus flag: the refill that matched the region of the open flag just taken. */
+  bonus: boolean;
   /** Flag just drawn from the deck, waiting to be placed or held (HIDDEN_FLAG for other players). */
   pending: number | null;
   /** Color/region/symbol roles that already received a flag this turn. */
@@ -38,7 +40,9 @@ export type BonusKind = "color" | "region" | "name";
 
 export type PublicEvent =
   | { type: "round"; round: number }
-  | { type: "take"; playerId: string; flag: number; from: "market" | "deck"; to: RoleKey | "hold" }
+  | { type: "take"; playerId: string; flag: number; from: "market" | "deck" | "bonus"; to: RoleKey | "hold" }
+  /** The refill matched the region of the flag just taken, so the player gets it too. */
+  | { type: "extra"; playerId: string; flag: number }
   | { type: "place"; playerId: string; flag: number; to: RoleKey }
   | { type: "complete"; playerId: string; role: RoleKey }
   | { type: "bonus"; kind: BonusKind; playerId: string; from: string | null }
@@ -65,7 +69,7 @@ export interface RoomState {
   deckCount: number;
   /** Flags from completed color/region roles; shuffled back into the deck when it runs out. */
   discard: number[];
-  /** Open flags. A taken slot stays null until the turn ends. */
+  /** Open flags, refilled as soon as one is taken. A slot is only null when there was nothing to refill it with. */
   market: (number | null)[];
   order: string[];
   turnIndex: number;

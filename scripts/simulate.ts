@@ -19,6 +19,9 @@ function check(room: RoomState) {
   room.discard.forEach(add);
   room.market.forEach(add);
   add(room.turn?.pending ?? null);
+  if (room.market.filter((m) => m !== null).length < room.market.length && room.deck.length + room.discard.length > 0) {
+    throw new Error("公開が補充されていない");
+  }
   for (const p of room.players) {
     if (p.hold.length > HOLD_LIMIT) throw new Error("保留が上限超え");
     for (const list of [...Object.values(p.colors), ...Object.values(p.regions), ...Object.values(p.symbols)]) {
