@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { COLORS, COLOR_HEX, COLOR_JA, FLAGS, REGIONS, REGION_JA, SYMBOLS, SYMBOL_ICON, SYMBOL_JA } from "@/lib/flags";
 import {
   baseScore,
@@ -20,6 +20,7 @@ import {
   rolePoints,
   scoreOf,
 } from "@/lib/rules";
+import { installAudioUnlock, isMuted, play, setMuted } from "@/lib/sound";
 import { TRIVIA } from "@/lib/trivia";
 import type { ClientToServerEvents } from "@/lib/socketEvents";
 import type { BonusKind, Player, PublicEvent, RoleKey, RoomState } from "@/lib/types";
@@ -39,6 +40,20 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
   const [confirming, setConfirming] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [triviaOff, setTriviaOff] = useState(false);
+  const [muted, setMutedState] = useState(isMuted);
+
+  useEffect(() => installAudioUnlock(), []);
+
+  // A fanfare whenever anyone completes a role (quieter when it isn't mine).
+  const seenEvents = useRef(room.eventCount);
+  useEffect(() => {
+    const fresh = room.eventCount - seenEvents.current;
+    seenEvents.current = room.eventCount;
+    if (fresh <= 0) return;
+    for (const e of room.log.slice(-fresh)) {
+      if (e.type === "complete") play("complete", { volume: e.playerId === viewerId ? 1 : 0.5 });
+    }
+  }, [room.eventCount, room.log, viewerId]);
 
   const me = room.players.find((p) => p.id === viewerId);
   const turn = room.turn;
@@ -61,6 +76,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
 
   function placeAt(role: RoleKey) {
     if (activeFlag === null) return;
+    play("place");
     if (pending !== null) run(act("game:resolveDraw", { to: role }));
     else if (picked !== null) run(act("game:takeMarket", { role }));
     else run(act("game:placeHeld", { flag: activeFlag, role }));
@@ -115,6 +131,16 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
           </button>
         )}
         {error && <span className="text-sm text-red-400">{error}</span>}
+        <button
+          onClick={() => {
+            setMuted(!muted);
+            setMutedState(!muted);
+          }}
+          title={muted ? "音を出す" : "音を消す"}
+          className="ml-auto rounded-full border border-white/15 px-3 py-1 text-sm text-white/70 hover:bg-white/10"
+        >
+          {muted ? "🔇" : "🔊"}
+        </button>
       </div>
 
       <section className="rounded-xl border border-white/10 bg-panel/80 p-3 sm:p-4">
@@ -133,6 +159,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
                 onClick={
                   myTurn && canTake(turn!)
                     ? () => {
+                        play("select");
                         setError(null);
                         setHeldSelection(null);
                         setConfirming(flagId);
@@ -144,7 +171,10 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
           )}
           <button
             disabled={!myTurn || !canTake(turn!) || deckAvailable(room) === 0}
-            onClick={() => run(act("game:draw", {}))}
+            onClick={() => {
+              play("select");
+              run(act("game:draw", {}));
+            }}
             className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-tri-blue bg-gradient-to-br from-tri-blue-deep/60 to-black/40 p-2 enabled:hover:border-tri-white disabled:opacity-60"
           >
             <span className="text-2xl">🂠</span>
@@ -184,6 +214,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
           onHold={
             myTurn && canPlayHeld(turn!)
               ? (flag) => {
+                  play("select");
                   setError(null);
                   setHeldSelection(held === flag ? null : flag);
                 }

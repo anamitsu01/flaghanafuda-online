@@ -92,6 +92,7 @@ export function createRoom(hostId: string, hostName: string, isTest = false): Ro
     turn: null,
     bonus: { color: null, region: null, name: null },
     log: [],
+    eventCount: 0,
     winners: null,
     endReason: null,
     createdAt: Date.now(),
@@ -163,6 +164,7 @@ function dealNewGame(prev: RoomState): RoomState {
   r.round = 1;
   r.bonus = { color: null, region: null, name: null };
   r.log = [{ type: "round", round: 1 }];
+  r.eventCount = 1;
   r.winners = null;
   r.endReason = null;
   r.phase = "playing";
@@ -203,6 +205,7 @@ function byId(room: RoomState, id: string): Player {
 
 function log(room: RoomState, event: PublicEvent) {
   room.log.push(event);
+  room.eventCount++;
   if (room.log.length > LOG_LIMIT) room.log.splice(0, room.log.length - LOG_LIMIT);
 }
 

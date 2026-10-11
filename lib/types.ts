@@ -74,6 +74,8 @@ export interface RoomState {
   /** Current holder (player id) of each movable +2 bonus. */
   bonus: Record<BonusKind, string | null>;
   log: PublicEvent[];
+  /** Events logged so far this game. The log itself is capped, so clients use this to spot new ones. */
+  eventCount: number;
   winners: string[] | null;
   endReason: EndReason | null;
   createdAt: number;
