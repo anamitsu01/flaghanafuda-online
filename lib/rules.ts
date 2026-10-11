@@ -4,8 +4,8 @@ import {
   BONUS_MIN_ROLES,
   BONUS_POINTS,
   HOLD_LIMIT,
-  MOON_POINTS,
   NAME_GOAL,
+  SYMBOL_POINTS,
   TAKES_PER_TURN,
   type BonusKind,
   type Player,
@@ -42,7 +42,7 @@ export function regionRolesDone(player: Player): number {
 
 /** Points a completed role is worth. */
 export function rolePoints(role: RoleKey): number {
-  return role === "s:moon" ? MOON_POINTS : 1;
+  return role.startsWith("s:") ? SYMBOL_POINTS[role.slice(2) as Symbol] : 1;
 }
 
 /** Points from symbol roles; they have no "most roles" bonus. */
@@ -56,6 +56,7 @@ export function nameLength(player: Player): number {
 
 /** What a player must beat to take each bonus; 0 while they don't qualify. */
 export function bonusValue(player: Player, kind: BonusKind): number {
+  if (kind === "symbol") return SYMBOLS.every((s) => roleDone(player, `s:${s}`)) ? 1 : 0;
   if (kind === "name") {
     const len = nameLength(player);
     return len >= NAME_GOAL ? len : 0;
@@ -69,7 +70,7 @@ export function baseScore(player: Player): number {
 }
 
 export function bonusesHeld(room: RoomState, playerId: string): BonusKind[] {
-  return (["color", "region", "name"] as const).filter((k) => room.bonus[k] === playerId);
+  return (["color", "region", "name", "symbol"] as const).filter((k) => room.bonus[k] === playerId);
 }
 
 export function scoreOf(room: RoomState, player: Player): number {

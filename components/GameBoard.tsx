@@ -31,9 +31,9 @@ type Act = <E extends keyof ClientToServerEvents>(
   payload: Omit<Parameters<ClientToServerEvents[E]>[0], "code">
 ) => Promise<string | null>;
 
-const BONUS_LABEL: Record<BonusKind, string> = { color: "色役最多", region: "地域役最多", name: "最長国名" };
-const BONUS_ICON: Record<BonusKind, string> = { color: "🎨", region: "🌍", name: "🔤" };
-const BONUS_KINDS: BonusKind[] = ["color", "region", "name"];
+const BONUS_LABEL: Record<BonusKind, string> = { color: "色役最多", region: "地域役最多", name: "最長国名", symbol: "星・月・太陽そろい" };
+const BONUS_ICON: Record<BonusKind, string> = { color: "🎨", region: "🌍", name: "🔤", symbol: "✨" };
+const BONUS_KINDS: BonusKind[] = ["color", "region", "name", "symbol"];
 
 export default function GameBoard({ room, viewerId, act }: { room: RoomState; viewerId: string; act: Act }) {
   const [heldSelection, setHeldSelection] = useState<number | null>(null);
@@ -426,7 +426,7 @@ function PlayerBoard({
       </div>
 
       {/* Short labels (colors, symbols) share a row; the longer region names get wider cells. */}
-      <div className={`grid grid-cols-3 gap-1.5 sm:grid-cols-4 ${compact ? "" : "lg:grid-cols-8"}`}>
+      <div className={`grid grid-cols-3 gap-1.5 sm:grid-cols-5 ${compact ? "" : "lg:grid-cols-9"}`}>
         {COLORS.map((c) => (
           <RoleCell key={c} player={player} role={`c:${c}`} target={targets.includes(`c:${c}`)} onRole={onRole}>
             <span className="h-3 w-3 shrink-0 rounded-full border border-white/40" style={{ background: COLOR_HEX[c] }} />
@@ -552,7 +552,8 @@ function RoleCell({
       <span className="flex items-center gap-1 text-xs">
         <b className="flex min-w-0 items-center gap-1 truncate tracking-tight text-ink">{children}</b>
         <PointsTag points={points} />
-        <span className={`ml-auto shrink-0 ${done ? "" : "hidden sm:inline"} ${done ? "font-bold text-emerald-300" : "text-white/40"}`}>{done ? "✓" : `${flags.length}/${ROLE_SIZE}`}</span>
+        {/* The five slots below already show the progress, so only completion is spelled out. */}
+        {done && <span className="ml-auto shrink-0 font-bold text-emerald-300">✓</span>}
       </span>
       {done && <span className="flex aspect-[20/3] items-center justify-center text-[11px] font-bold text-emerald-300/80">完成 +{rolePoints(role)}点</span>}
       <span className={done ? "hidden" : "grid grid-cols-5 gap-0.5"}>
@@ -644,8 +645,8 @@ function LogPanel({ room }: { room: RoomState }) {
               {BONUS_ICON[k]} {BONUS_LABEL[k]}:{" "}
               {holder ? (
                 <b className="text-tri-blue-light">
-                  {holder.name}({bonusValue(holder, k)}
-                  {k === "name" ? "文字" : "役"})
+                  {holder.name}
+                  {k !== "symbol" && `(${bonusValue(holder, k)}${k === "name" ? "文字" : "役"})`}
                 </b>
               ) : (
                 "まだいない"

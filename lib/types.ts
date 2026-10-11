@@ -36,7 +36,8 @@ export interface TurnState {
   used: RoleKey[];
 }
 
-export type BonusKind = "color" | "region" | "name";
+/** "symbol" is different from the rest: the first to finish all three symbol roles keeps it for good. */
+export type BonusKind = "color" | "region" | "name" | "symbol";
 
 export type PublicEvent =
   | { type: "round"; round: number }
@@ -75,7 +76,7 @@ export interface RoomState {
   turnIndex: number;
   round: number;
   turn: TurnState | null;
-  /** Current holder (player id) of each movable +2 bonus. */
+  /** Current holder (player id) of each +2 bonus. */
   bonus: Record<BonusKind, string | null>;
   log: PublicEvent[];
   /** Events logged so far this game. The log itself is capped, so clients use this to spot new ones. */
@@ -106,5 +107,5 @@ export const NAME_GOAL = 20;
 export const BONUS_MIN_ROLES = 3;
 export const BONUS_POINTS = 2;
 export const DEFAULT_TARGET = 10;
-/** The moon role is worth more because so few flags have a moon. */
-export const MOON_POINTS = 3;
+/** Moon and sun roles are worth more because so few flags have one. */
+export const SYMBOL_POINTS: Record<Symbol, number> = { star: 1, moon: 2, sun: 2 };

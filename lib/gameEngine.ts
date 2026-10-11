@@ -90,7 +90,7 @@ export function createRoom(hostId: string, hostName: string, isTest = false): Ro
     turnIndex: 0,
     round: 0,
     turn: null,
-    bonus: { color: null, region: null, name: null },
+    bonus: { color: null, region: null, name: null, symbol: null },
     log: [],
     eventCount: 0,
     winners: null,
@@ -124,7 +124,7 @@ export function updateSettings(room: RoomState, requesterId: string, settings: P
   if (room.phase !== "lobby" && room.phase !== "gameover") throw new GameError("ゲーム中は設定を変更できません");
   const next: RoomSettings = { ...room.settings };
   const v = settings.targetScore;
-  if (typeof v === "number" && Number.isFinite(v)) next.targetScore = Math.min(22, Math.max(3, Math.round(v)));
+  if (typeof v === "number" && Number.isFinite(v)) next.targetScore = Math.min(25, Math.max(3, Math.round(v)));
   return { ...room, settings: next };
 }
 
@@ -162,7 +162,7 @@ function dealNewGame(prev: RoomState): RoomState {
   r.order = shuffle(r.players.map((p) => p.id));
   r.turnIndex = 0;
   r.round = 1;
-  r.bonus = { color: null, region: null, name: null };
+  r.bonus = { color: null, region: null, name: null, symbol: null };
   r.log = [{ type: "round", round: 1 }];
   r.eventCount = 1;
   r.winners = null;
@@ -268,6 +268,8 @@ function place(room: RoomState, player: Player, turn: TurnState, flagId: number,
   }
   if (role.startsWith("c:")) updateBonus(room, player, "color");
   if (role.startsWith("r:")) updateBonus(room, player, "region");
+  // Everyone with all three symbol roles has the same value, so only the first ever gets this one.
+  if (role.startsWith("s:")) updateBonus(room, player, "symbol");
 }
 
 function finish(room: RoomState, winners: Player[], reason: EndReason) {

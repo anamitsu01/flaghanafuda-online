@@ -1,5 +1,5 @@
 import { FLAGS } from "@/lib/flags";
-import { BONUS_MIN_ROLES, BONUS_POINTS, HOLD_LIMIT, MARKET_SIZE, MOON_POINTS, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
+import { BONUS_MIN_ROLES, BONUS_POINTS, HOLD_LIMIT, MARKET_SIZE, NAME_GOAL, ROLE_SIZE, SYMBOL_POINTS, TAKES_PER_TURN } from "@/lib/types";
 
 export default function RulesPanel({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
@@ -49,8 +49,10 @@ export function RulesContent({ className = "" }: { className?: string }) {
           <b className="text-ink">地域役</b>(アジア・ヨーロッパ・アフリカ・アメリカ大陸・オセアニア): 同じ地域の国旗を{ROLE_SIZE}枚で完成、1点。
         </li>
         <li>
-          <b className="text-ink">模様役</b>(星・月): 星のある国旗、月のある国旗をそれぞれ{ROLE_SIZE}枚で完成。星役は1点、月役は数が少ないので<b className="text-ink">{MOON_POINTS}点</b>。
-          星は形を問わない(五芒星・とがった星・線だけの星)。月は三日月のほか、満月を表す円(ラオス・パラオ)も含む。太陽は星に数えない。
+          <b className="text-ink">模様役</b>(星・月・太陽): 星・月・太陽のある国旗をそれぞれ{ROLE_SIZE}枚で完成。星役は{SYMBOL_POINTS.star}点、
+          月役と太陽役は数が少ないので<b className="text-ink">{SYMBOL_POINTS.moon}点</b>。
+          星は形を問わない(五芒星・とがった星・線だけの星)。月は三日月のほか、満月を表す円(ラオス・パラオ)も含む。
+          太陽は光の線のあるもののほか、太陽を表す丸(日本・バングラデシュなど)も含む。
         </li>
         <li>
           <b className="text-ink">国名役</b>: 国名をつなげて合計{NAME_GOAL}文字以上で完成、1点。完成したあとも置き続けられる。どんな国旗でも置ける。「・」と( )の中は文字数に数えない。
@@ -66,13 +68,16 @@ export function RulesContent({ className = "" }: { className?: string }) {
         先に条件を満たした人が持ち、ほかの人が記録を<b className="text-ink">上回ったとき</b>にだけ移る(同数なら移らない)。
       </p>
       <p>
+        <b className="text-ink">模様そろいボーナス</b>(+{BONUS_POINTS}点): 星役・月役・太陽役の3つを<b className="text-ink">最初に</b>すべて完成させた人だけがもらえる。あとから移ることはない。
+      </p>
+      <p>
         <b className="text-ink">勝利</b>: だれかが勝利点に届いたら、そのラウンドの最後の人まで手番を回す。
         その時点で勝利点以上の人のうち、いちばん点が高い人の勝ち(同点なら同着1位)。
         ボーナスが移ってだれも届いていなければ、ゲームを続ける。
       </p>
       <p>
         <b className="text-ink">色の数え方</b>: 国旗の面積のおよそ2%以上を占める色を数える。オレンジや金色は黄、えんじ色は赤、水色や紺色は青として扱う。
-        カードの色の丸が、その国旗で使える色。★や☾の印があれば、星役・月役にも使える(模様役に最多ボーナスはない)。
+        カードの色の丸が、その国旗で使える色。★ ☾ ☀ の印があれば、星役・月役・太陽役にも使える。
       </p>
       <p className="text-white/45">山札・捨て札・公開の国旗がすべてなくなった場合は、そのラウンドの終わりにいちばん点が高い人の勝ち。</p>
     </div>

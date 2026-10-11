@@ -116,7 +116,7 @@ export default function Lobby({
         </button>
         <span className="w-10 text-center text-base font-bold">{target}</span>
         <button
-          disabled={!isHost || target >= 22}
+          disabled={!isHost || target >= 25}
           onClick={async () => setError(await onSettings({ targetScore: target + 1 }))}
           className="h-8 w-8 rounded-lg border border-white/10 enabled:hover:bg-white/10 disabled:opacity-30"
         >
