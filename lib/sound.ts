@@ -4,7 +4,7 @@
 // allow audio after a user gesture, so the context is created lazily and
 // unlocked on the first pointer/key press.
 
-export type SoundName = "select" | "place" | "complete" | "bonus" | "whistle";
+export type SoundName = "select" | "place" | "complete" | "bonus" | "fanfare";
 
 const MUTE_KEY = "kokki:muted";
 let ctx: AudioContext | null = null;
@@ -92,16 +92,24 @@ export function play(name: SoundName, opts: { volume?: number } = {}) {
       [988, 1319, 1760].forEach((f, i) => tone(f, now + 0.12 + i * 0.06, 0.16, "square", 0.1 * v));
       tone(2093, now + 0.3, 0.3, "sine", 0.16 * v);
       break;
-    case "whistle": // ピッピー: a referee's whistle, two close pitches beating against each other for the trill
-      for (const [at, dur] of [
-        [0, 0.12],
-        [0.2, 0.8], // ends 1s after the first blast starts
-      ]) {
-        tone(1425, now + at, dur, "sine", 0.3 * v);
-        tone(1455, now + at, dur, "sine", 0.3 * v);
-        tone(2850, now + at, dur, "sine", 0.05 * v);
-      }
+    case "fanfare": {
+      // The game is decided: three quick calls, a climb, and a held chord. 2s in all.
+      const brass = (freq: number, at: number, dur: number, vol: number) => {
+        tone(freq, now + at, dur, "sawtooth", vol * v);
+        tone(freq, now + at, dur, "square", vol * 0.5 * v);
+      };
+      brass(523, 0, 0.16, 0.16);
+      brass(523, 0.18, 0.16, 0.16);
+      brass(523, 0.36, 0.16, 0.16);
+      brass(659, 0.54, 0.3, 0.17);
+      brass(784, 0.86, 0.3, 0.17);
+      // Final chord, ringing out until the 2s mark.
+      brass(1047, 1.18, 0.82, 0.18);
+      brass(784, 1.18, 0.82, 0.1);
+      brass(659, 1.18, 0.82, 0.1);
+      tone(262, now + 1.18, 0.82, "triangle", 0.25 * v);
       break;
+    }
     case "complete": // rising fanfare, a beat after the card lands
       [523, 659, 784, 1047].forEach((f, i) => tone(f, now + 0.15 + i * 0.09, 0.28, "triangle", 0.3 * v));
       tone(1568, now + 0.55, 0.5, "sine", 0.2 * v);

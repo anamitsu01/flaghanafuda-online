@@ -56,12 +56,12 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
     }
   }, [room.eventCount, room.log, viewerId]);
 
-  // The end of a game: whistle and cut-in first, then the result and confetti a beat later.
+  // The end of a game: fanfare and cut-in first, then the result and confetti a beat later.
   const endKey = room.phase === "gameover" ? `${room.createdAt}-${room.round}-${room.eventCount}` : null;
   const [shownEnd, setShownEnd] = useState<string | null>(null);
   useEffect(() => {
     if (!endKey) return;
-    play("whistle");
+    play("fanfare");
     const timer = setTimeout(() => {
       setShownEnd(endKey);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -341,8 +341,8 @@ function ColorDots({ flagId }: { flagId: number }) {
 }
 
 /** Without `reveal` only the picture and its colors show: the name, region and length stay unknown. */
-/** "決着!" sweeps across for as long as the whistle blows. */
-const END_CUTIN_SECONDS = 1;
+/** "決着!" sweeps across for as long as the fanfare plays. */
+const END_CUTIN_SECONDS = 2;
 
 /** How long "決着!" has the screen to itself before the result appears. */
 const RESULT_DELAY_MS = 700;
