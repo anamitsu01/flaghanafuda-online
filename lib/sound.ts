@@ -95,11 +95,11 @@ export function play(name: SoundName, opts: { volume?: number } = {}) {
     case "whistle": // ピッピー: a referee's whistle, two close pitches beating against each other for the trill
       for (const [at, dur] of [
         [0, 0.12],
-        [0.2, 0.75],
+        [0.2, 0.8], // ends 1s after the first blast starts
       ]) {
-        tone(2850, now + at, dur, "sine", 0.3 * v);
-        tone(2910, now + at, dur, "sine", 0.3 * v);
-        tone(5700, now + at, dur, "sine", 0.05 * v);
+        tone(1425, now + at, dur, "sine", 0.3 * v);
+        tone(1455, now + at, dur, "sine", 0.3 * v);
+        tone(2850, now + at, dur, "sine", 0.05 * v);
       }
       break;
     case "complete": // rising fanfare, a beat after the card lands

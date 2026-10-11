@@ -101,7 +101,7 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
   // the bonus when one turns up, and a reminder once the first flag (and any bonus) is settled.
   const turnKey = `${room.round}-${room.turnIndex}`;
   const banner = endKey
-    ? { key: `end-${endKey}`, text: "決着!", red: true }
+    ? { key: `end-${endKey}`, text: "決着!", red: true, seconds: END_CUTIN_SECONDS }
     : !myTurn
       ? null
       : turn!.bonus
@@ -109,6 +109,8 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
         : turn!.taken >= 1
           ? { key: `${turnKey}-more`, text: "もう1枚", red: false }
           : { key: turnKey, text: `${me!.name}の番`, red: false };
+
+  const bannerDuration = banner && "seconds" in banner ? `${banner.seconds}s` : undefined;
 
   // Someone else is playing: time for trivia.
   const waiting = room.phase === "playing" && !myTurn && !triviaOff;
@@ -271,8 +273,15 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
       {/* The key changes when the banner does, so each one sweeps across exactly once. */}
       {banner && (
         <div className="pointer-events-none fixed inset-x-0 top-1/3 z-40 overflow-hidden py-4" role="status" aria-live="polite">
-          <div key={banner.key} className="kk-cutin relative left-[-10%] w-[120%] py-4" style={banner.red ? { background: "var(--color-tri-red)" } : undefined}>
-            <p className="kk-cutin-text px-6 text-center text-3xl font-black tracking-wider text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)] sm:text-5xl">
+          <div
+            key={banner.key}
+            className="kk-cutin relative left-[-10%] w-[120%] py-4"
+            style={{ background: banner.red ? "var(--color-tri-red)" : undefined, animationDuration: bannerDuration }}
+          >
+            <p
+              style={{ animationDuration: bannerDuration }}
+              className="kk-cutin-text px-6 text-center text-3xl font-black tracking-wider text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)] sm:text-5xl"
+            >
               {banner.text}
             </p>
           </div>
@@ -332,6 +341,9 @@ function ColorDots({ flagId }: { flagId: number }) {
 }
 
 /** Without `reveal` only the picture and its colors show: the name, region and length stay unknown. */
+/** "決着!" sweeps across for as long as the whistle blows. */
+const END_CUTIN_SECONDS = 1;
+
 /** How long "決着!" has the screen to itself before the result appears. */
 const RESULT_DELAY_MS = 700;
 
