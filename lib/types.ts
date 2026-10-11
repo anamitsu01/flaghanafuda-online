@@ -18,7 +18,7 @@ export interface Player {
   symbols: Record<Symbol, number[]>;
   /** Name role, in the order the flags were added. */
   names: number[];
-  /** Deck flags kept without a role yet. Only the owner sees them; others get HIDDEN_FLAG. */
+  /** Deck flags kept without a role yet (public). */
   hold: number[];
 }
 
@@ -30,7 +30,7 @@ export interface TurnState {
   picked: number | null;
   /** `picked` is a bonus flag: the refill that matched the region of the open flag just taken. */
   bonus: boolean;
-  /** Flag just drawn from the deck, waiting to be placed or held (HIDDEN_FLAG for other players). */
+  /** Flag just drawn from the deck, waiting to be placed or held. */
   pending: number | null;
   /** Color/region/symbol roles that already received a flag this turn. */
   used: RoleKey[];
@@ -86,9 +86,6 @@ export interface RoomState {
   createdAt: number;
 }
 
-/** Stands in for a flag the viewer isn't allowed to see. */
-export const HIDDEN_FLAG = -1;
-
 /** Entering this room code opens a fresh private test room with bots. */
 export const TEST_ROOM_CODE = "ZZZZZ";
 export const TEST_ROOM_BOTS = 3;
@@ -103,8 +100,8 @@ export const HOLD_LIMIT = 3;
 export const ROLE_SIZE = 5;
 /** Total name characters needed to complete the name role. */
 export const NAME_GOAL = 20;
-/** Completed roles needed before the "most roles" bonus can be held. */
-export const BONUS_MIN_ROLES = 3;
+/** Completed roles needed before each "most roles" bonus can be held. */
+export const BONUS_MIN_ROLES = { color: 4, region: 3 } as const;
 export const BONUS_POINTS = 2;
 export const DEFAULT_TARGET = 10;
 /** Moon and sun roles are worth more because so few flags have one. */

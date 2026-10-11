@@ -12,7 +12,6 @@ import {
 } from "./rules";
 import {
   DEFAULT_TARGET,
-  HIDDEN_FLAG,
   MARKET_SIZE,
   MAX_PLAYERS,
   MIN_PLAYERS,
@@ -414,17 +413,7 @@ export function hostSkip(room: RoomState, requesterId: string): RoomState {
 // ---------------------------------------------------------------------------
 // Visibility
 
-/**
- * Hidden from a viewer: the order of the deck, and flags other players drew
- * from it that haven't reached a role yet (their hold and the flag in hand).
- */
-export function sanitizeForPlayer(room: RoomState, viewerId: string): RoomState {
-  const turn = room.turn;
-  return {
-    ...room,
-    deck: [],
-    players: room.players.map((p) => (p.id === viewerId ? p : { ...p, hold: p.hold.map(() => HIDDEN_FLAG) })),
-    turn: turn && turn.pending !== null && turn.playerId !== viewerId ? { ...turn, pending: HIDDEN_FLAG } : turn,
-    log: room.log.map((e) => (e.type === "take" && e.to === "hold" && e.playerId !== viewerId ? { ...e, flag: HIDDEN_FLAG } : e)),
-  };
+/** Everything is open information except the order of the deck. */
+export function sanitizeForPlayer(room: RoomState): RoomState {
+  return { ...room, deck: [] };
 }

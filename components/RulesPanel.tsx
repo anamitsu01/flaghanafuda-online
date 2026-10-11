@@ -32,7 +32,7 @@ export function RulesContent({ className = "" }: { className?: string }) {
         <b className="text-ink">公開の国旗</b>: 見えるのは絵柄と色だけ。選んで「はい」と答えると国名・地域・文字数が分かるが、もう選び直せない(置く役はそのあと決める)。
       </p>
       <p>
-        <b className="text-ink">山札の国旗</b>: 引いた本人にはすぐ国名と地域が分かる。保留している国旗は、ほかの人には見えない。
+        <b className="text-ink">山札の国旗</b>: 引くとすぐ国名と地域が分かり、全員に見える。保留している国旗も全員に見える。
       </p>
       <p>
         <b className="text-ink">保留カード</b>: 自分の手番の最初、国旗を取る前にだけ、好きな枚数を役に置ける。
@@ -63,8 +63,8 @@ export function RulesContent({ className = "" }: { className?: string }) {
         完成した役の国旗5枚は<b className="text-ink">捨て札</b>になり、山札がなくなると捨て札を混ぜ直して新しい山札にする(国名役の国旗は残る)。
       </p>
       <p>
-        <b className="text-ink">最多ボーナス</b>(各+{BONUS_POINTS}点): 色役をいちばん多く完成させた人({BONUS_MIN_ROLES}役以上)、
-        地域役をいちばん多く完成させた人({BONUS_MIN_ROLES}役以上)、国名役がいちばん長い人(完成済み)。
+        <b className="text-ink">最多ボーナス</b>(各+{BONUS_POINTS}点): 色役をいちばん多く完成させた人({BONUS_MIN_ROLES.color}役以上)、
+        地域役をいちばん多く完成させた人({BONUS_MIN_ROLES.region}役以上)、国名役がいちばん長い人(完成済み)。
         先に条件を満たした人が持ち、ほかの人が記録を<b className="text-ink">上回ったとき</b>にだけ移る(同数なら移らない)。
       </p>
       <p>

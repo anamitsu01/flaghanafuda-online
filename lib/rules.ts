@@ -62,7 +62,7 @@ export function bonusValue(player: Player, kind: BonusKind): number {
     return len >= NAME_GOAL ? len : 0;
   }
   const done = kind === "color" ? colorRolesDone(player) : regionRolesDone(player);
-  return done >= BONUS_MIN_ROLES ? done : 0;
+  return done >= BONUS_MIN_ROLES[kind] ? done : 0;
 }
 
 export function baseScore(player: Player): number {

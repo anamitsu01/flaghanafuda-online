@@ -24,7 +24,7 @@ import { installAudioUnlock, isMuted, play, setMuted } from "@/lib/sound";
 import { TRIVIA } from "@/lib/trivia";
 import type { ClientToServerEvents } from "@/lib/socketEvents";
 import type { BonusKind, Player, PublicEvent, RoleKey, RoomState } from "@/lib/types";
-import { BONUS_POINTS, HIDDEN_FLAG, HOLD_LIMIT, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
+import { BONUS_POINTS, HOLD_LIMIT, NAME_GOAL, ROLE_SIZE, TAKES_PER_TURN } from "@/lib/types";
 
 type Act = <E extends keyof ClientToServerEvents>(
   event: E,
@@ -82,6 +82,17 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
     else if (picked !== null) run(act("game:takeMarket", { role }));
     else run(act("game:placeHeld", { flag: activeFlag, role }));
   }
+
+  // What sweeps across on my turn: my name when it starts, the bonus when one turns up,
+  // and a reminder once the first flag (and any bonus that came with it) is settled.
+  const turnKey = `${room.round}-${room.turnIndex}`;
+  const banner = !myTurn
+    ? null
+    : turn!.bonus
+      ? { key: `${turnKey}-bonus-${turn!.taken}`, text: "ボーナス!", red: true }
+      : turn!.taken >= 1
+        ? { key: `${turnKey}-more`, text: "もう1枚", red: false }
+        : { key: turnKey, text: `${me!.name}の番`, red: false };
 
   // Someone else is playing: time for trivia.
   const waiting = room.phase === "playing" && !myTurn && !triviaOff;
@@ -236,12 +247,12 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
 
       {waiting && <TriviaBar market={room.market} onHide={() => setTriviaOff(true)} />}
 
-      {/* Keyed by turn so the band plays once each time my turn comes round. */}
-      {myTurn && (
+      {/* The key changes when the banner does, so each one sweeps across exactly once. */}
+      {banner && (
         <div className="pointer-events-none fixed inset-x-0 top-1/3 z-40 overflow-hidden py-4" role="status" aria-live="polite">
-          <div key={`${room.round}-${room.turnIndex}`} className="kk-cutin relative left-[-10%] w-[120%] py-4">
+          <div key={banner.key} className="kk-cutin relative left-[-10%] w-[120%] py-4" style={banner.red ? { background: "var(--color-tri-red)" } : undefined}>
             <p className="kk-cutin-text px-6 text-center text-3xl font-black tracking-wider text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)] sm:text-5xl">
-              {me!.name}の番
+              {banner.text}
             </p>
           </div>
         </div>
@@ -273,16 +284,6 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
 
 /** `secret`: an open flag nobody has committed to yet, so its name must not leak through the tooltip. */
 function FlagImg({ flagId, className = "", secret = false }: { flagId: number; className?: string; secret?: boolean }) {
-  if (flagId === HIDDEN_FLAG) {
-    return (
-      <span
-        title="ほかの人には見えない国旗"
-        className={`flex aspect-[4/3] items-center justify-center rounded-sm border border-tri-blue bg-gradient-to-br from-tri-blue-deep/70 to-black/40 text-tri-white/70 ${className}`}
-      >
-        ?
-      </span>
-    );
-  }
   const flag = FLAGS[flagId];
   return (
     <img
@@ -349,13 +350,6 @@ function FlagCard({ flagId, reveal = false, selected, onClick }: { flagId: numbe
   const cls = `kk-pop flex flex-col items-center gap-1 rounded-lg border-2 bg-white/5 p-1.5 text-center ${
     selected ? "border-tri-red bg-tri-red/15" : "border-white/10 enabled:hover:border-white/40"
   }`;
-  if (flagId === HIDDEN_FLAG) {
-    return (
-      <div className={cls}>
-        <FlagImg flagId={flagId} className="w-full text-2xl" />
-      </div>
-    );
-  }
   const flag = FLAGS[flagId];
   return (
     <button disabled={!onClick} onClick={onClick} className={cls}>
@@ -480,9 +474,8 @@ function PlayerBoard({
           <span className="flex gap-1">
             {Array.from({ length: HOLD_LIMIT }, (_, i) => {
               const flagId = player.hold[i];
-              const size = isMe ? "w-20" : "w-10";
+              const size = isMe ? "w-20" : "w-16";
               if (flagId === undefined) return <span key={`empty-${i}`} className={`aspect-[4/3] rounded border border-dashed border-white/10 ${size}`} />;
-              if (flagId === HIDDEN_FLAG) return <FlagImg key={`hidden-${i}`} flagId={flagId} className={`kk-pop ${size}`} />;
               const flag = FLAGS[flagId];
               return (
                 <button
@@ -617,7 +610,6 @@ function LogPanel({ room }: { room: RoomState }) {
       case "round":
         return `— 第${e.round}ラウンド —`;
       case "take":
-        if (e.flag === HIDDEN_FLAG) return `${name(e.playerId)}: 山札から1枚 → 保留`;
         return `${name(e.playerId)}: ${e.from === "market" ? "公開から" : e.from === "bonus" ? "ボーナスの" : "山札から"}「${flag(e.flag)}」→ ${e.to === "hold" ? "保留" : roleLabel(e.to)}`;
       case "extra":
         return `🎁 ${name(e.playerId)}にボーナス! 補充された「${flag(e.flag)}」が同じ地域だった`;
