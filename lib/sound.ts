@@ -4,7 +4,7 @@
 // allow audio after a user gesture, so the context is created lazily and
 // unlocked on the first pointer/key press.
 
-export type SoundName = "select" | "place" | "complete" | "bonus";
+export type SoundName = "select" | "place" | "complete" | "bonus" | "whistle";
 
 const MUTE_KEY = "kokki:muted";
 let ctx: AudioContext | null = null;
@@ -91,6 +91,16 @@ export function play(name: SoundName, opts: { volume?: number } = {}) {
     case "bonus": // two quick sparkles: an extra card has turned up
       [988, 1319, 1760].forEach((f, i) => tone(f, now + 0.12 + i * 0.06, 0.16, "square", 0.1 * v));
       tone(2093, now + 0.3, 0.3, "sine", 0.16 * v);
+      break;
+    case "whistle": // ピッピー: a referee's whistle, two close pitches beating against each other for the trill
+      for (const [at, dur] of [
+        [0, 0.12],
+        [0.2, 0.75],
+      ]) {
+        tone(2850, now + at, dur, "sine", 0.3 * v);
+        tone(2910, now + at, dur, "sine", 0.3 * v);
+        tone(5700, now + at, dur, "sine", 0.05 * v);
+      }
       break;
     case "complete": // rising fanfare, a beat after the card lands
       [523, 659, 784, 1047].forEach((f, i) => tone(f, now + 0.15 + i * 0.09, 0.28, "triangle", 0.3 * v));

@@ -112,3 +112,18 @@ body::before {
 .kk-cutin-text {
   animation: kk-cutin-text 1.6s ease-out both;
 }
+
+/* Confetti over the result: each piece falls a few times with its own drift and spin. */
+@keyframes kk-confetti {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--kk-drift), 110vh, 0) rotate(var(--kk-spin));
+    opacity: 0.9;
+  }
+}
+.kk-confetti {
+  animation: kk-confetti 3.5s linear 3 both;
+}

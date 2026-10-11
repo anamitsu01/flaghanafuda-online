@@ -56,6 +56,20 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
     }
   }, [room.eventCount, room.log, viewerId]);
 
+  // The end of a game: whistle and cut-in first, then the result and confetti a beat later.
+  const endKey = room.phase === "gameover" ? `${room.createdAt}-${room.round}-${room.eventCount}` : null;
+  const [shownEnd, setShownEnd] = useState<string | null>(null);
+  useEffect(() => {
+    if (!endKey) return;
+    play("whistle");
+    const timer = setTimeout(() => {
+      setShownEnd(endKey);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, RESULT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [endKey]);
+  const showResult = endKey !== null && shownEnd === endKey;
+
   const me = room.players.find((p) => p.id === viewerId);
   const turn = room.turn;
   const actor = turn ? room.players.find((p) => p.id === turn.playerId) : undefined;
@@ -83,16 +97,18 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
     else run(act("game:placeHeld", { flag: activeFlag, role }));
   }
 
-  // What sweeps across on my turn: my name when it starts, the bonus when one turns up,
-  // and a reminder once the first flag (and any bonus that came with it) is settled.
+  // What sweeps across: the end of the game for everyone; on my turn, my name when it starts,
+  // the bonus when one turns up, and a reminder once the first flag (and any bonus) is settled.
   const turnKey = `${room.round}-${room.turnIndex}`;
-  const banner = !myTurn
-    ? null
-    : turn!.bonus
-      ? { key: `${turnKey}-bonus-${turn!.taken}`, text: "ボーナス!", red: true }
-      : turn!.taken >= 1
-        ? { key: `${turnKey}-more`, text: "もう1枚", red: false }
-        : { key: turnKey, text: `${me!.name}の番`, red: false };
+  const banner = endKey
+    ? { key: `end-${endKey}`, text: "決着!", red: true }
+    : !myTurn
+      ? null
+      : turn!.bonus
+        ? { key: `${turnKey}-bonus-${turn!.taken}`, text: "ボーナス!", red: true }
+        : turn!.taken >= 1
+          ? { key: `${turnKey}-more`, text: "もう1枚", red: false }
+          : { key: turnKey, text: `${me!.name}の番`, red: false };
 
   // Someone else is playing: time for trivia.
   const waiting = room.phase === "playing" && !myTurn && !triviaOff;
@@ -121,7 +137,12 @@ export default function GameBoard({ room, viewerId, act }: { room: RoomState; vi
 
   return (
     <div className={`flex flex-col gap-4 ${waiting ? "pb-28" : ""}`}>
-      {room.phase === "gameover" && <Result room={room} viewerId={viewerId} act={act} onError={setError} />}
+      {showResult && (
+        <>
+          <Confetti />
+          <Result room={room} viewerId={viewerId} act={act} onError={setError} />
+        </>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-panel/80 px-4 py-3">
         <span className="text-sm text-white/50">
@@ -311,6 +332,48 @@ function ColorDots({ flagId }: { flagId: number }) {
 }
 
 /** Without `reveal` only the picture and its colors show: the name, region and length stay unknown. */
+/** How long "決着!" has the screen to itself before the result appears. */
+const RESULT_DELAY_MS = 700;
+
+const CONFETTI_COLORS = ["#ed2939", "#2f6fe4", "#f5f7fa", "#f5c518", "#22a55b", "#ff7ab6", "#ff9f1c", "#8b5cf6"];
+
+/** Colorful paper falling over the result. Decoration only: it never catches a click. */
+function Confetti() {
+  const [pieces] = useState(() =>
+    Array.from({ length: 90 }, (_, i) => ({
+      left: Math.random() * 100,
+      size: 6 + Math.random() * 7,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      delay: Math.random() * 2.5,
+      duration: 2.8 + Math.random() * 2.4,
+      drift: (Math.random() - 0.5) * 30,
+      spin: (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 720),
+    }))
+  );
+  return (
+    <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden" aria-hidden>
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="kk-confetti absolute top-0 block rounded-[1px]"
+          style={
+            {
+              left: `${p.left}%`,
+              width: p.size,
+              height: p.size * 1.6,
+              background: p.color,
+              animationDelay: `${p.delay}s`,
+              animationDuration: `${p.duration}s`,
+              "--kk-drift": `${p.drift}vw`,
+              "--kk-spin": `${p.spin}deg`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 const TRIVIA_MS = 12_000;
 
 /** Something to read while others play: one fact at a time about a country that isn't on offer right now. */
